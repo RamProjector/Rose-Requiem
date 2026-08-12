@@ -131,7 +131,8 @@ class LyricsFetchViewModel(
             embedLyricsInFile(
                 context = context,
                 filePath = if (filePath != null && filePath.isNotEmpty()) filePath else throw NullPointerException("File path is null"),
-                lrcContent
+                lyrics = lrcContent,
+                year = song.year,
             )
         }.onFailure { exception ->
             showToast(context, resolveEmbedErrorMessage(context, exception))

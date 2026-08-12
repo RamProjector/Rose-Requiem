@@ -137,10 +137,24 @@ fun getFileDescriptorFromPath(
     }
 }
 
+/**
+ * Pulls a plain 4-digit year out of a provider's release-date string (e.g. Apple's
+ * "2022-06-09" or Musixmatch's similarly-shaped value) for writing into the DATE tag.
+ * Deliberately defensive rather than assuming a fixed format -- these are undocumented/
+ * internal API responses, not a stable contract -- so this only returns something if the
+ * first 4 characters are actually digits, and null otherwise rather than writing garbage
+ * into a file's tags.
+ */
+fun extractYear(dateString: String?): String? {
+    val candidate = dateString?.take(4) ?: return null
+    return candidate.takeIf { it.length == 4 && it.all(Char::isDigit) }
+}
+
 fun embedLyricsInFile(
     context: Context,
     filePath: String,
     lyrics: String,
+    year: String? = null,
     securityExceptionHandler: (PendingIntent) -> Unit = {}
 ): Boolean {
     return try {
@@ -150,10 +164,15 @@ fun embedLyricsInFile(
         val fileDescriptor = fd.dup().detachFd()
         val metadata = TagLib.getMetadata(fileDescriptor, false) ?: error("Metadata is null")
 
-        TagLib.savePropertyMap(
-            fd.dup().detachFd(),
-            propertyMap = metadata.propertyMap.apply { put("LYRICS", arrayOf(lyrics)) }
-        )
+        val propertyMap = metadata.propertyMap.apply {
+            put("LYRICS", arrayOf(lyrics))
+            // DATE is TagLib's unified cross-format key for release year/date (it's what
+            // e.g. APE's YEAR gets normalized to internally) -- writing here rather than
+            // a separate call keeps this to the one file open/write TagLib already does.
+            if (!year.isNullOrBlank()) put("DATE", arrayOf(year))
+        }
+
+        TagLib.savePropertyMap(fd.dup().detachFd(), propertyMap = propertyMap)
 
         true
     } catch (securityException: SecurityException) {
@@ -351,7 +370,8 @@ private suspend fun downloadLyricsForSong(
                         embedLyricsInFile(
                             context,
                             song.filePath ?: throw NullPointerException("File path is null"),
-                            lrcContent
+                            lrcContent,
+                            year = songInfo.year,
                         )
                     } else {
                         writeLyricsToFile(

@@ -9,6 +9,7 @@ import com.roserequiem.app.data.remote.PaxMusicHelper
 import com.roserequiem.app.domain.model.SongInfo
 import com.roserequiem.app.domain.model.lyrics_providers.others.AppleMusicSearchResponse
 import com.roserequiem.app.util.EmptyQueryException
+import com.roserequiem.app.util.extractYear
 import com.roserequiem.app.util.networking.Ktor.client
 import com.roserequiem.app.util.networking.Ktor.json
 import java.net.URLEncoder
@@ -93,7 +94,8 @@ class AppleAPI {
                 artistName = attributes.artistName,
                 songLink = attributes.url,
                 albumCoverLink = artworkUrl,
-                appleID = songId.toLongOrNull() ?: return null
+                appleID = songId.toLongOrNull() ?: return null,
+                year = extractYear(attributes.releaseDate)
             )
         } catch (e: Exception) {
             e.printStackTrace()

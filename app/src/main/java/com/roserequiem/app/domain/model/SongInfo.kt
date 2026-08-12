@@ -20,6 +20,8 @@ import kotlinx.parcelize.Parcelize
  * @param hasUnsyncedLyrics Flag indicating if the song has unsynced lyrics (Musixmatch-only).
  * @param syncedLyrics The synced lyrics (Musixmatch-only).
  * @param unsyncedLyrics The unsynced lyrics (Musixmatch-only).
+ * @param year The song's release year, if the provider supplied one (Apple/Musixmatch-only
+ * today -- Spotify's current query and LRCLib/Netease/QQMusic don't return this at all).
  */
 @Suppress("SpellCheckingInspection")
 @Parcelize
@@ -40,4 +42,5 @@ data class SongInfo(
     var availableLanguages: List<String> = emptyList(), // Musixmatch-only
     var originalLanguage: String? = null, // Musixmatch-only
     var currentLanguage: String? = null, // Musixmatch-only
+    var year: String? = null, // Apple/Musixmatch-only
 ) : Parcelable

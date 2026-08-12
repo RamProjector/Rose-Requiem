@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import com.roserequiem.app.domain.model.SongInfo
 import com.roserequiem.app.domain.model.lyrics_providers.others.MusixmatchSearchResponse
 import com.roserequiem.app.util.EmptyQueryException
+import com.roserequiem.app.util.extractYear
 import com.roserequiem.app.util.networking.Ktor.client
 import com.roserequiem.app.util.networking.Ktor.json
 import java.net.URLEncoder
@@ -59,7 +60,8 @@ class MusixmatchAPI {
             unsyncedLyrics = result.unsyncedLyrics?.lyrics,
             availableLanguages = result.availableLanguages,
             originalLanguage = result.originalLanguage,
-            currentLanguage = result.originalLanguage ?: "en"
+            currentLanguage = result.originalLanguage ?: "en",
+            year = extractYear(result.releaseDate)
         )
     }
 
