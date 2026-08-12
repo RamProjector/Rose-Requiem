@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.androidTest)
     alias(libs.plugins.kotlinAndroid)
@@ -20,9 +22,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
 
     targetProjectPath = ":app"
     experimentalProperties["android.experimental.self-instrumenting"] = true
@@ -38,6 +37,12 @@ android {
             apiLevel = 34
             systemImageSource = "aosp"
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
