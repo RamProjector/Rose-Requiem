@@ -57,6 +57,16 @@ what changed in them, so they aren't reconstructed here.
   outright at that version (deprecated since 2.0), and this project's
   `kotlinOptions` blocks predated the Kotlin bump in this same version.
   Migrated to `compilerOptions`.
+- Build failure from the Coil 2→3 migration above: `MemoryCache.Builder`,
+  `DiskCache.Builder().directory()`, and the image loader's
+  `placeholder()`/`error()` setters all changed signature in Coil 3.5.0
+  (`Context` moved out of the `MemoryCache.Builder` constructor and into
+  `maxSizePercent(context, fraction)`; `directory()` now takes an Okio
+  `Path` instead of `java.io.File`; placeholders take a `coil3.Image`
+  instead of a raw drawable resource ID), and `respectCacheHeaders()`
+  was removed from the loader builder entirely. Updated both app-wide
+  and quick-search image loaders, plus the two composables that set
+  placeholders, to match.
 
 ## [4.3.3] and earlier
 Untracked. This is the version the project was at when this changelog
