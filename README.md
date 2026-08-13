@@ -13,7 +13,7 @@ A personal fork of [SongSync](https://github.com/Lambada10/SongSync) — an Andr
 
 ### About this fork
 
-Rose Requiem started from SongSync and has since diverged: a custom visual identity (color palette, typography, icon), the background download service, concurrency and correctness fixes to the lyrics pipeline, and various other changes described in the commit history.
+Rose Requiem started from SongSync and has since diverged: a custom visual identity (color palette, typography, icon), the background download service, concurrency and correctness fixes to the lyrics pipeline, and more — see [CHANGELOG.md](CHANGELOG.md) for what's actually changed release to release.
 
 ### License
 
