@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.CombinedModifier
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.asImage
 import coil3.compose.rememberAsyncImagePainter
 import coil3.imageLoader
 import coil3.request.ImageRequest
@@ -44,6 +46,7 @@ fun SharedTransitionScope.SongCard(
 ) {
     val unknownArtistString = stringResource(R.string.unknown)
     val context = LocalContext.current
+    val placeholderImage = remember { context.getDrawable(R.drawable.ic_song)?.asImage() }
 
     OutlinedCard(
         shape = RoundedCornerShape(10.dp),
@@ -59,12 +62,12 @@ fun SharedTransitionScope.SongCard(
         Row(modifier = Modifier.height(72.dp)) {
             if (coverUrl != null) {
                 val painter = rememberAsyncImagePainter(
-                    ImageRequest.Builder(LocalContext.current).data(data = coverUrl)
+                    ImageRequest.Builder(context).data(data = coverUrl)
                         .apply {
-                            placeholder(R.drawable.ic_song)
-                            error(R.drawable.ic_song)
+                            placeholder(placeholderImage)
+                            error(placeholderImage)
                         }.build(),
-                    imageLoader = LocalContext.current.imageLoader
+                    imageLoader = context.imageLoader
                 )
                 Image(
                     painter = painter,

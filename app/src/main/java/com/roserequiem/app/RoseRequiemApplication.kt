@@ -9,6 +9,7 @@ import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.roserequiem.app.data.DownloadHistoryRepository
 import okhttp3.OkHttpClient
+import okio.Path.Companion.toOkioPath
 
 /**
  * Gives Coil an explicit cache budget instead of relying on its default singleton
@@ -43,13 +44,13 @@ class RoseRequiemApplication : Application(), SingletonImageLoader.Factory {
                 add(OkHttpNetworkFetcherFactory(callFactory = { okHttpClient }))
             }
             .memoryCache {
-                MemoryCache.Builder(context)
-                    .maxSizePercent(0.25)
+                MemoryCache.Builder()
+                    .maxSizePercent(context, 0.25)
                     .build()
             }
             .diskCache {
                 DiskCache.Builder()
-                    .directory(cacheDir.resolve("album_art_cache"))
+                    .directory(cacheDir.resolve("album_art_cache").toOkioPath())
                     .maxSizePercent(0.02)
                     .build()
             }

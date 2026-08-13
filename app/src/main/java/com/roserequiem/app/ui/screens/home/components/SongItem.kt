@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -29,6 +30,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.asImage
 import coil3.compose.rememberAsyncImagePainter
 import coil3.imageLoader
 import coil3.request.ImageRequest
@@ -52,12 +54,14 @@ fun SongItem(
     showPath: Boolean,
     isNavigatingItem: Boolean,
 ) {
+    val context = LocalContext.current
+    val placeholderImage = remember { context.getDrawable(R.drawable.ic_song)?.asImage() }
     val painter = rememberAsyncImagePainter(
-        ImageRequest.Builder(LocalContext.current).data(data = song.imgUri).apply {
-            placeholder(R.drawable.ic_song)
-            error(R.drawable.ic_song)
+        ImageRequest.Builder(context).data(data = song.imgUri).apply {
+            placeholder(placeholderImage)
+            error(placeholderImage)
             size(240, 240)
-        }.build(), imageLoader = LocalContext.current.imageLoader
+        }.build(), imageLoader = context.imageLoader
     )
     val songName = song.title ?: stringResource(id = R.string.unknown)
     val artists = song.artist ?: stringResource(id = R.string.unknown)

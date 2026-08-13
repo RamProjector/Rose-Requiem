@@ -18,6 +18,7 @@ import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
+import okio.Path.Companion.toOkioPath
 import com.roserequiem.app.R
 import com.roserequiem.app.activities.quicksearch.viewmodel.QuickLyricsSearchViewModel
 import com.roserequiem.app.activities.quicksearch.viewmodel.QuickLyricsSearchViewModelFactory
@@ -43,17 +44,16 @@ class QuickLyricsSearchActivity : AppCompatActivity() {
                 add(OkHttpNetworkFetcherFactory(callFactory = { OkHttpClient() }))
             }
             .memoryCache {
-                MemoryCache.Builder(this)
-                    .maxSizePercent(0.35)
+                MemoryCache.Builder()
+                    .maxSizePercent(this, 0.35)
                     .build()
             }
             .diskCache {
                 DiskCache.Builder()
-                    .directory(this.cacheDir.resolve("image_cache"))
+                    .directory(this.cacheDir.resolve("image_cache").toOkioPath())
                     .maxSizeBytes(7 * 1024 * 1024)
                     .build()
             }
-            .respectCacheHeaders(false)
             .allowHardware(true)
             .crossfade(true)
             .bitmapFactoryMaxParallelism(12)
