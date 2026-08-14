@@ -79,6 +79,14 @@ what changed in them, so they aren't reconstructed here.
   one build at a time rather than all together, since Kotlin stops
   reporting unresolved references further down a chained expression
   once an earlier link in the chain is itself unresolved.
+- The release workflow never actually produced a v4.4.0 build: `ci.yml`
+  was pinned to `actions/checkout@v2`, and both `ci.yml` and
+  `release.yml` were pinned to `actions/setup-java@v3`. Both are old
+  enough to still declare the `node16` runtime, which GitHub removed
+  from Actions runners entirely on November 12, 2024 -- so every run
+  failed before touching any app code, independent of whether the
+  project itself built cleanly. Bumped to `actions/checkout@v4` and
+  `actions/setup-java@v5`.
 
 ## [4.3.3] and earlier
 Untracked. This is the version the project was at when this changelog
