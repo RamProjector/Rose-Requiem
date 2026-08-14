@@ -13,10 +13,12 @@ import androidx.compose.material3.ModalBottomSheetDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
+import coil3.bitmapFactoryMaxParallelism
 import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.allowHardware
+import coil3.request.crossfade
 import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
 import okio.Path.Companion.toOkioPath
@@ -58,7 +60,7 @@ class QuickLyricsSearchActivity : AppCompatActivity() {
             .allowHardware(true)
             .crossfade(true)
             .bitmapFactoryMaxParallelism(12)
-            .dispatcher(Dispatchers.IO)
+            .coroutineContext(Dispatchers.IO)
             .build()
 
         enableEdgeToEdge()

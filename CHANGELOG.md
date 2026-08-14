@@ -68,11 +68,17 @@ what changed in them, so they aren't reconstructed here.
   and quick-search image loaders, plus the two composables that set
   placeholders, to match.
 - Build failure in the quick-search image loader, also left over from the
-  Coil 2→3 migration above: `allowHardware(true)` no longer resolved,
-  since Coil 3.5.0 moved `allowHardware` out of `ImageLoader.Builder`
-  itself and into `coil3.request` as an Android-only extension function,
-  which needs an explicit import rather than coming for free with
-  `ImageLoader`. Added `import coil3.request.allowHardware`.
+  Coil 2→3 migration above: `allowHardware(true)`, `crossfade(true)`, and
+  `bitmapFactoryMaxParallelism(12)` stopped resolving, since Coil 3.5.0
+  ships each as an extension function (`coil3.request.allowHardware`,
+  `coil3.request.crossfade`, `coil3.bitmapFactoryMaxParallelism`) rather
+  than a member of `ImageLoader.Builder`, so each needs its own import.
+  Separately, `dispatcher(Dispatchers.IO)` no longer exists at all --
+  Coil renamed it to `coroutineContext` back in `3.0.0-alpha08` -- so
+  that call is now `coroutineContext(Dispatchers.IO)`. These surfaced
+  one build at a time rather than all together, since Kotlin stops
+  reporting unresolved references further down a chained expression
+  once an earlier link in the chain is itself unresolved.
 
 ## [4.3.3] and earlier
 Untracked. This is the version the project was at when this changelog
