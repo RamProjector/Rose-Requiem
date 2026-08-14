@@ -67,6 +67,12 @@ what changed in them, so they aren't reconstructed here.
   was removed from the loader builder entirely. Updated both app-wide
   and quick-search image loaders, plus the two composables that set
   placeholders, to match.
+- Build failure in the quick-search image loader, also left over from the
+  Coil 2→3 migration above: `allowHardware(true)` no longer resolved,
+  since Coil 3.5.0 moved `allowHardware` out of `ImageLoader.Builder`
+  itself and into `coil3.request` as an Android-only extension function,
+  which needs an explicit import rather than coming for free with
+  `ImageLoader`. Added `import coil3.request.allowHardware`.
 
 ## [4.3.3] and earlier
 Untracked. This is the version the project was at when this changelog
