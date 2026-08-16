@@ -152,7 +152,10 @@ fun BatchDownloadLyrics(viewModel: HomeViewModel, onDone: () -> Unit) {
             }
         )
 
-        UiState.RateLimited -> RateLimitedDialog(onDismiss = { uiState = UiState.Cancelled })
+        UiState.RateLimited -> RateLimitedDialog(
+            provider = viewModel.userSettingsController.selectedProvider,
+            onDismiss = { uiState = UiState.Cancelled },
+        )
     }
 }
 

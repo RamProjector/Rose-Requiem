@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import com.roserequiem.app.MainActivity
 import kotlinx.coroutines.CancellationException
+import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -96,10 +97,7 @@ class BatchDownloadService : Service() {
         // re-post that instead of a bogus 0/1 placeholder.
         createNotificationChannel()
         val current = _state.value
-        startForeground(
-            PROGRESS_NOTIFICATION_ID,
-            buildProgressNotification(current?.completed ?: 0, current?.total ?: 1)
-        )
+        startForeground(PROGRESS_NOTIFICATION_ID, buildProgressNotification(current))
 
         if (intent?.action == ACTION_CANCEL) {
             downloadJob?.cancel()
@@ -127,43 +125,81 @@ class BatchDownloadService : Service() {
         val ignoreEmbeddedLyrics = intent.getBooleanExtra(EXTRA_IGNORE_EMBEDDED_LYRICS, false)
 
         pausedDueToTaskRemoval = false
-        _state.value = BatchDownloadState(total = songs.size, ignoreEmbeddedLyrics = ignoreEmbeddedLyrics)
-        startForeground(PROGRESS_NOTIFICATION_ID, buildProgressNotification(0, songs.size))
-        DownloadHistoryRepository.markQueued(songs)
+        // Split into chunks up front, but only ever queue (markQueued) one at a time,
+        // right before it starts -- see CHUNK_SIZE's doc for why queueing them all
+        // immediately would be actively worse than not chunking at all.
+        val chunks = songs.chunked(CHUNK_SIZE)
+        // All batchIds decided now, not generated lazily inside markQueued, so they can
+        // be protected as a group before the first one is even queued -- otherwise a
+        // 1200-song/5-chunk run would evict its own chunk 1 (already finished!) the
+        // moment chunk 3's markQueued call pushes the total past MAX_RECORDS.
+        val batchIds = List(chunks.size) { UUID.randomUUID().toString() }
+        DownloadHistoryRepository.protectBatches(batchIds.toSet())
+        _state.value = BatchDownloadState(
+            total = songs.size,
+            ignoreEmbeddedLyrics = ignoreEmbeddedLyrics,
+            chunkCount = chunks.size,
+        )
+        startForeground(PROGRESS_NOTIFICATION_ID, buildProgressNotification(_state.value))
 
         downloadJob = serviceScope.launch {
             val userSettingsController = UserSettingsController(applicationContext.dataStore)
             val lyricsProviderService = LyricsProviderService()
             val viewModel = HomeViewModel(userSettingsController, lyricsProviderService)
 
+            // Running totals carried across chunks -- each downloadLyrics() call below
+            // reports counts from zero for just its own chunk, so these are what turn
+            // that back into a total that covers the whole run for the UI/notification.
+            var baseSuccess = 0
+            var baseNoLyrics = 0
+            var baseFailed = 0
+            var baseSkipped = 0
+            val allFlaggedSongs = mutableListOf<FlaggedSong>()
+
             try {
-                downloadLyrics(
-                    songs = songs,
-                    viewModel = viewModel,
-                    context = applicationContext,
-                    ignoreEmbeddedLyrics = ignoreEmbeddedLyrics,
-                    onProgressUpdate = { successCount, noLyricsCount, failedCount, skippedCount ->
-                        val completed = successCount + noLyricsCount + failedCount + skippedCount
-                        _state.value = _state.value?.copy(
-                            completed = completed,
-                            successCount = successCount,
-                            noLyricsCount = noLyricsCount,
-                            failedCount = failedCount,
-                            skippedCount = skippedCount,
-                        )
-                        notify(PROGRESS_NOTIFICATION_ID, buildProgressNotification(completed, songs.size))
-                    },
-                    onDownloadComplete = { flaggedSongs ->
-                        _state.value = _state.value?.copy(isComplete = true, flaggedSongs = flaggedSongs)
-                        notify(RESULT_NOTIFICATION_ID, buildCompleteNotification(_state.value))
-                    },
-                    onRateLimitReached = {
-                        _state.value = _state.value?.copy(isRateLimited = true)
-                    },
-                    onSongStatusChanged = { song, status ->
-                        DownloadHistoryRepository.updateStatus(song.filePath, status)
-                    }
-                )
+                for ((index, chunk) in chunks.withIndex()) {
+                    _state.value = _state.value?.copy(chunkIndex = index + 1)
+                    DownloadHistoryRepository.markQueued(chunk, batchIds[index])
+
+                    downloadLyrics(
+                        songs = chunk,
+                        viewModel = viewModel,
+                        context = applicationContext,
+                        ignoreEmbeddedLyrics = ignoreEmbeddedLyrics,
+                        onProgressUpdate = { successCount, noLyricsCount, failedCount, skippedCount ->
+                            val completed = baseSuccess + successCount + baseNoLyrics + noLyricsCount +
+                                baseFailed + failedCount + baseSkipped + skippedCount
+                            _state.value = _state.value?.copy(
+                                completed = completed,
+                                successCount = baseSuccess + successCount,
+                                noLyricsCount = baseNoLyrics + noLyricsCount,
+                                failedCount = baseFailed + failedCount,
+                                skippedCount = baseSkipped + skippedCount,
+                            )
+                            notify(PROGRESS_NOTIFICATION_ID, buildProgressNotification(_state.value))
+                        },
+                        onDownloadComplete = { flaggedSongs -> allFlaggedSongs += flaggedSongs },
+                        onRateLimitReached = { _state.value = _state.value?.copy(isRateLimited = true) },
+                        onSongStatusChanged = { song, status ->
+                            DownloadHistoryRepository.updateStatus(song.filePath, status)
+                        }
+                    )
+
+                    // Roll this chunk's final counts into the running base before the
+                    // next chunk's onProgressUpdate starts counting from zero again.
+                    val finished = _state.value
+                    baseSuccess = finished?.successCount ?: baseSuccess
+                    baseNoLyrics = finished?.noLyricsCount ?: baseNoLyrics
+                    baseFailed = finished?.failedCount ?: baseFailed
+                    baseSkipped = finished?.skippedCount ?: baseSkipped
+
+                    // A rate limit hit on this chunk will just be hit again immediately
+                    // by the next one -- stop starting further chunks rather than
+                    // grinding through the rest of them the same way.
+                    if (_state.value?.isRateLimited == true) break
+                }
+                _state.value = _state.value?.copy(isComplete = true, flaggedSongs = allFlaggedSongs)
+                notify(RESULT_NOTIFICATION_ID, buildCompleteNotification(_state.value))
             } catch (e: CancellationException) {
                 _state.value = _state.value?.copy(isComplete = true)
                 if (pausedDueToTaskRemoval) {
@@ -174,6 +210,11 @@ class BatchDownloadService : Service() {
                     notify(RESULT_NOTIFICATION_ID, buildCancelledNotification())
                 }
             } finally {
+                // Always runs regardless of which exit path was taken above (finished
+                // normally, broke out early on a rate limit, or was cancelled) -- this
+                // run's batches stop being protected the moment it's actually done,
+                // rather than only on the success path.
+                DownloadHistoryRepository.clearProtectedBatches()
                 // The result notification above is independent of this service's
                 // foreground status (separate ID), so it isn't affected by removing
                 // the ongoing progress notification here -- no detach/timing race to
@@ -232,12 +273,22 @@ class BatchDownloadService : Service() {
         return PendingIntent.getActivity(this, 1, intent, flags)
     }
 
-    private fun buildProgressNotification(completed: Int, total: Int): Notification =
+    private fun buildProgressNotification(state: BatchDownloadState?): Notification =
         NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.batch_download_lyrics))
-            .setContentText("$completed / $total")
-            .setProgress(total, completed, false)
+            .setContentText(
+                if ((state?.chunkCount ?: 1) > 1) {
+                    getString(
+                        R.string.progress_with_batch,
+                        state?.completed ?: 0, state?.total ?: 1,
+                        state?.chunkIndex ?: 1, state?.chunkCount ?: 1
+                    )
+                } else {
+                    "${state?.completed ?: 0} / ${state?.total ?: 1}"
+                }
+            )
+            .setProgress(state?.total ?: 1, state?.completed ?: 0, false)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(goToDownloadsPendingIntent())
@@ -250,8 +301,12 @@ class BatchDownloadService : Service() {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.download_complete))
             .setContentText(
-                "${getString(R.string.success)}: ${state?.successCount ?: 0}  " +
-                    "${getString(R.string.no_lyrics)}: ${state?.noLyricsCount ?: 0}"
+                getString(
+                    R.string.success_failed,
+                    state?.successCount ?: 0,
+                    state?.noLyricsCount ?: 0,
+                    state?.failedCount ?: 0
+                )
             )
             .setAutoCancel(true)
             .setOngoing(false)
@@ -294,6 +349,17 @@ class BatchDownloadService : Service() {
         private const val ACTION_CANCEL = "com.roserequiem.app.action.CANCEL_BATCH_DOWNLOAD"
         private const val EXTRA_SONGS = "extra_songs"
         private const val EXTRA_IGNORE_EMBEDDED_LYRICS = "extra_ignore_embedded_lyrics"
+
+        /**
+         * Songs per [DownloadHistoryRepository.markQueued] call. Kept well under
+         * [DownloadHistoryRepository.MAX_RECORDS] (half of it), not sized against it --
+         * a chunk this size queues, leaving comfortable headroom for whatever history
+         * already existed before this run to survive alongside it instead of being
+         * evicted the moment the chunk is queued. Each chunk gets its own batchId, so on
+         * the Downloads screen a huge run just shows up as several ordinary batch cards
+         * rather than needing any new UI concept.
+         */
+        private const val CHUNK_SIZE = DownloadHistoryRepository.MAX_RECORDS / 2
 
         private val _state = MutableStateFlow<BatchDownloadState?>(null)
 
@@ -339,5 +405,11 @@ data class BatchDownloadState(
     val ignoreEmbeddedLyrics: Boolean = false,
     val isComplete: Boolean = false,
     val isRateLimited: Boolean = false,
-    val flaggedSongs: List<FlaggedSong> = emptyList()
+    val flaggedSongs: List<FlaggedSong> = emptyList(),
+    // 1-based index of the chunk currently running, and how many chunks this run was
+    // split into -- see CHUNK_SIZE below. chunkCount is 1 (chunkIndex always 1) for any
+    // run that didn't need splitting, so existing UI that ignores these two fields keeps
+    // working unchanged.
+    val chunkIndex: Int = 1,
+    val chunkCount: Int = 1,
 )

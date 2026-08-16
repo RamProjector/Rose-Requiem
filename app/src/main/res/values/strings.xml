@@ -35,6 +35,7 @@
         <item quantity="other">%1$d songs</item>
     </plurals>
     <string name="batch_download_lyrics">Batch download lyrics</string>
+    <string name="progress_with_batch">%1$d / %2$d (batch %3$d/%4$d)</string>
     <string name="start_download">Start download</string>
     <string name="run_in_background">Run in background</string>
     <string name="batch_download_runs_in_background">Runs in the background with a notification, so you can leave this screen or the app while it works.</string>
@@ -55,6 +56,10 @@
     <string name="success">Success: %1$d</string>
     <string name="failed">Failed: %1$d</string>
     <string name="spotify_api_rate_limit_reached">Spotify API rate limit reached</string>
+    <!-- Provider-aware replacement for the string above: the batch-download rate-limit
+         heuristic can trip for any provider (Apple Music, Musixmatch, etc.), not just
+         Spotify, so the dialog needs to say which one actually hit the limit. -->
+    <string name="api_rate_limit_reached">%1$s API rate limit reached</string>
     <string name="please_try_again_later">Please try again later</string>
     <string name="save_lrc_file">Save .lrc file</string>
     <string name="no_results">No results</string>
@@ -133,7 +138,6 @@
     <string name="up_to_date">You\'re using latest version</string>
     <string name="error_checking_for_updates">Error checking for updates</string>
     <string name="close">Close</string>
-    <string name="fix_history">Fix history</string>
     <string name="filters">Filters</string>
     <string name="no_lyrics_only">Only show songs without LRC file lyrics</string>
     <string name="ignore_folders">Ignore folders</string>
@@ -148,6 +152,7 @@
     <string name="web_player_keys">Web Player API</string>
     <string name="custom_keys">Custom API credentials</string>
     <string name="change_api_strategy">You can also try alternative ways to connect to Spotify network in settings.</string>
+    <string name="change_api_strategy_provider">You can also try alternative ways to connect to %1$s in settings.</string>
     <string name="theme">Theme</string>
     <string name="pure_black_theme">Pure black theme</string>
     <string name="use_dynamic_color">Use wallpaper colors (Material You)</string>

@@ -50,6 +50,7 @@ import com.roserequiem.app.ui.screens.downloads.components.CancelBatchDownloadDi
 import com.roserequiem.app.ui.screens.downloads.components.DownloadItem
 import com.roserequiem.app.ui.screens.downloads.components.DownloadStatusFilterRow
 import com.roserequiem.app.ui.screens.downloads.components.DownloadsSearchBar
+import com.roserequiem.app.util.TrackJankState
 import com.roserequiem.app.util.ext.BackPressHandler
 import kotlinx.coroutines.launch
 
@@ -61,6 +62,7 @@ fun DownloadsScreen(
 ) {
     val records by viewModel.records.collectAsState()
     val isLoaded by viewModel.isLoaded.collectAsState()
+    TrackJankState("screen", "downloads")
     // Both backed by SavedStateHandle (see DownloadsViewModel) so they survive the app's
     // process being killed and restored, not just configuration changes.
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -174,14 +176,25 @@ fun DownloadsScreen(
                             // around content that's already fully visible.
                             val record = filteredBatch.matchingRecords.first()
                             item(key = batch.batchId) {
+                                // Keyed on `record` (a plain data class of primitives/enum,
+                                // already Compose-stable): only rebuilt if this specific
+                                // record's data changes, not on every recomposition of the
+                                // row -- same reasoning as Home's SongItem callbacks.
+                                val onToggleSelected = remember(record) {
+                                    { viewModel.toggleSelected(record.filePath) }
+                                }
+                                val isRemovable = !selectionMode && viewModel.isRemovable(record.status)
+                                val onDismiss = remember(record, isRemovable) {
+                                    if (isRemovable) {
+                                        { offerUndo(listOf(viewModel.removeRecord(record))) }
+                                    } else null
+                                }
                                 DownloadItem(
                                     record = record,
                                     selectionMode = selectionMode,
-                                    selected = record.filePath in viewModel.selectedFilePaths,
-                                    onToggleSelected = { viewModel.toggleSelected(record.filePath) },
-                                    onDismiss = if (!selectionMode && viewModel.isRemovable(record.status)) {
-                                        { offerUndo(listOf(viewModel.removeRecord(record))) }
-                                    } else null,
+                                    selected = viewModel.selectedFilePaths.containsKey(record.filePath),
+                                    onToggleSelected = onToggleSelected,
+                                    onDismiss = onDismiss,
                                 )
                                 HorizontalDivider()
                             }
@@ -199,16 +212,24 @@ fun DownloadsScreen(
                                 items(
                                     filteredBatch.matchingRecords,
                                     key = { "${batch.batchId}:${it.filePath}" },
+                                    contentType = { "download_item" },
                                 ) { record ->
+                                    val onToggleSelected = remember(record) {
+                                        { viewModel.toggleSelected(record.filePath) }
+                                    }
+                                    val isRemovable = !selectionMode && viewModel.isRemovable(record.status)
+                                    val onDismiss = remember(record, isRemovable) {
+                                        if (isRemovable) {
+                                            { offerUndo(listOf(viewModel.removeRecord(record))) }
+                                        } else null
+                                    }
                                     Column(modifier = Modifier.padding(start = 16.dp)) {
                                         DownloadItem(
                                             record = record,
                                             selectionMode = selectionMode,
-                                            selected = record.filePath in viewModel.selectedFilePaths,
-                                            onToggleSelected = { viewModel.toggleSelected(record.filePath) },
-                                            onDismiss = if (!selectionMode && viewModel.isRemovable(record.status)) {
-                                                { offerUndo(listOf(viewModel.removeRecord(record))) }
-                                            } else null,
+                                            selected = viewModel.selectedFilePaths.containsKey(record.filePath),
+                                            onToggleSelected = onToggleSelected,
+                                            onDismiss = onDismiss,
                                         )
                                     }
                                     HorizontalDivider()

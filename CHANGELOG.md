@@ -11,6 +11,40 @@ what changed in them, so they aren't reconstructed here.
 
 ## [4.4.0]
 
+### Fixed
+- Batch downloads over `MAX_RECORDS` (500) songs in one run were silently
+  dropping history visibility for the overflow: the songs still downloaded,
+  they just never got a `DownloadRecord`, so there was no way to see their
+  status or retry a failure. `BatchDownloadService` now chunks large runs
+  (250 songs/chunk) and processes them sequentially, and
+  `DownloadHistoryRepository` protects every batch belonging to the
+  in-progress run from eviction until the whole run finishes -- including a
+  second bug found in the first fix, where sequential chunks from the same
+  run could still evict each other's already-finished records.
+- The "download complete" notification showed raw `%1$d` placeholders
+  instead of real counts. Now uses the existing (correctly-formatted, but
+  previously unused) `success_failed` string.
+- The rate-limit dialog always said "Spotify" regardless of which provider
+  actually hit the limit. Now names the provider that was in use.
+
+### Changed
+- Home and Downloads list selection (`SnapshotStateList` + `.contains()`)
+  recomposed every visible row on any single selection change, worst case
+  while the user was also scrolling. Converted both to
+  `SnapshotStateMap<String, Unit>` for real per-key read observation, added
+  `@Immutable` to `Song` and converted `SongInfo`'s 17 unused `var` fields
+  to `val` (Compose can't infer either as stable otherwise), added
+  `contentType` to both lists, and memoized per-row click/selection
+  lambdas -- all aimed at the same reported scroll jank.
+- Home list made more compact (row height 80dp/100dp \u2192 64dp/80dp, smaller
+  text and album art) to match a reference density; marquee now defaults
+  off instead of on.
+- Wired up **JankStats** (`androidx.metrics:metrics-performance`) with
+  screen/scroll-state tags on Home and Downloads, logged to Logcat under
+  `JankStats` -- reported jank survived every fix above through static
+  review alone, so this gets a real on-device answer (which frames, how
+  long, what state) instead of another guess from source.
+
 ### Added
 - Release year is now captured from Apple and Musixmatch (both already
   parsed it and discarded it) and embedded into the file's `DATE` tag

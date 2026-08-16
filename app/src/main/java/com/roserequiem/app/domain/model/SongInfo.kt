@@ -1,6 +1,7 @@
 package com.roserequiem.app.domain.model
 
 import android.os.Parcelable
+import androidx.compose.runtime.Immutable
 import kotlinx.parcelize.Parcelize
 
 /**
@@ -22,25 +23,32 @@ import kotlinx.parcelize.Parcelize
  * @param unsyncedLyrics The unsynced lyrics (Musixmatch-only).
  * @param year The song's release year, if the provider supplied one (Apple/Musixmatch-only
  * today -- Spotify's current query and LRCLib/Netease/QQMusic don't return this at all).
+ *
+ * @Immutable + all-`val`: every field here was declared `var` with no mutation site
+ * anywhere in the codebase (checked all 17 field names project-wide) -- every instance
+ * is built once via the constructor and never mutated afterward. A `var` property makes
+ * Compose infer the whole class unstable regardless of annotations, since it has no way
+ * to observe a raw field mutation; `val` + @Immutable is what the actual usage pattern is.
  */
 @Suppress("SpellCheckingInspection")
+@Immutable
 @Parcelize
 data class SongInfo(
-    var songName: String?,
-    var artistName: String? = null,
-    var songLink: String? = null,
-    var albumCoverLink: String? = null,
-    var lrcLibID: Int? = null, // LRCLib-only
-    var qqPayload: String? = null, // QQMusic-only
-    var neteaseID: Long? = null, // Netease-only
-    var appleID: Long? = null, // Apple-only
-    var musixmatchID: Long? = null, // Musixmatch-only
-    var hasSyncedLyrics: Boolean? = null, // Musixmatch-only
-    var hasUnsyncedLyrics: Boolean? = null, // Musixmatch-only
-    var syncedLyrics: String? = null, // Musixmatch-only
-    var unsyncedLyrics: String? = null, // Musixmatch-only
-    var availableLanguages: List<String> = emptyList(), // Musixmatch-only
-    var originalLanguage: String? = null, // Musixmatch-only
-    var currentLanguage: String? = null, // Musixmatch-only
-    var year: String? = null, // Apple/Musixmatch-only
+    val songName: String?,
+    val artistName: String? = null,
+    val songLink: String? = null,
+    val albumCoverLink: String? = null,
+    val lrcLibID: Int? = null, // LRCLib-only
+    val qqPayload: String? = null, // QQMusic-only
+    val neteaseID: Long? = null, // Netease-only
+    val appleID: Long? = null, // Apple-only
+    val musixmatchID: Long? = null, // Musixmatch-only
+    val hasSyncedLyrics: Boolean? = null, // Musixmatch-only
+    val hasUnsyncedLyrics: Boolean? = null, // Musixmatch-only
+    val syncedLyrics: String? = null, // Musixmatch-only
+    val unsyncedLyrics: String? = null, // Musixmatch-only
+    val availableLanguages: List<String> = emptyList(), // Musixmatch-only
+    val originalLanguage: String? = null, // Musixmatch-only
+    val currentLanguage: String? = null, // Musixmatch-only
+    val year: String? = null, // Apple/Musixmatch-only
 ) : Parcelable

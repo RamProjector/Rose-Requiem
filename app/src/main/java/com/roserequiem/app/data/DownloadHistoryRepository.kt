@@ -27,9 +27,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 private val Context.downloadHistoryDataStore by preferencesDataStore(name = "download_history")
 private val RECORDS_KEY = stringPreferencesKey("records_json")
 
-/** Oldest records are dropped once a batch pushes the history past this many entries. */
-private const val MAX_RECORDS = 500
-
 /**
  * Persisted per-song lyrics download history: what's queued, downloading, or finished,
  * and how it finished. Lives in its own DataStore file rather than
@@ -44,6 +41,15 @@ private const val MAX_RECORDS = 500
  * batch doesn't trigger a disk write per song.
  */
 object DownloadHistoryRepository {
+    /**
+     * Oldest records are dropped once a batch pushes the history past this many entries.
+     * Public so [com.roserequiem.app.services.BatchDownloadService] can size its chunks
+     * relative to this cap instead of duplicating the number -- a single huge batch
+     * calling [markQueued] with more than this many songs at once will silently lose
+     * the overflow (they still download, they just never become visible/trackable
+     * history), so batches need to stay well under it.
+     */
+    const val MAX_RECORDS = 500
     private val json = Json { ignoreUnknownKeys = true }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     // Guards init() itself against running twice -- flips true the instant init() is
@@ -54,6 +60,46 @@ object DownloadHistoryRepository {
 
     private val _records = MutableStateFlow<List<DownloadRecord>>(emptyList())
     val records: StateFlow<List<DownloadRecord>> = _records.asStateFlow()
+
+    // batchIds belonging to whatever multi-chunk run is currently in progress (set by
+    // BatchDownloadService before it starts queueing chunks, cleared when the whole run
+    // ends). trimToCap keeps every record in this set ahead of anything outside it,
+    // regardless of timestamp -- without this, a run whose chunks cumulatively exceed
+    // MAX_RECORDS would evict its own earlier, already-finished chunks as later ones
+    // get queued, which is a visibly broken experience (a completed batch disappearing
+    // off the Downloads screen mid-run) rather than just an invisible history cap.
+    private val _protectedBatchIds = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Call before queueing the first chunk of a multi-chunk run. See [_protectedBatchIds]. */
+    fun protectBatches(batchIds: Set<String>) {
+        _protectedBatchIds.value = batchIds
+    }
+
+    /** Call once the whole run (every chunk) has finished, been cancelled, or paused. */
+    fun clearProtectedBatches() {
+        _protectedBatchIds.value = emptySet()
+    }
+
+    /**
+     * The shared eviction policy behind every [MAX_RECORDS] cap in this file: keep every
+     * record belonging to a currently-protected batch (see [_protectedBatchIds]) first,
+     * then fill whatever's left with the most recent records outside that set. Only
+     * falls back to trimming *within* the protected set itself if the protected set
+     * alone is larger than the cap -- i.e. the currently-running download itself has
+     * queued more than [MAX_RECORDS] songs, at which point there's no way to show all of
+     * it and the oldest-finished chunks of the same run are what gives.
+     */
+    private fun trimToCap(records: Collection<DownloadRecord>): List<DownloadRecord> {
+        val protected = _protectedBatchIds.value
+        if (protected.isEmpty()) return records.sortedByDescending { it.timestamp }.take(MAX_RECORDS)
+
+        val (protectedRecords, others) = records.partition { it.batchId in protected }
+        return if (protectedRecords.size >= MAX_RECORDS) {
+            protectedRecords.sortedByDescending { it.timestamp }.take(MAX_RECORDS)
+        } else {
+            protectedRecords + others.sortedByDescending { it.timestamp }.take(MAX_RECORDS - protectedRecords.size)
+        }
+    }
 
     // True only once the initial disk read has actually completed (or failed/found
     // nothing). The Downloads screen uses this to show a loading state instead of
@@ -79,7 +125,7 @@ object DownloadHistoryRepository {
                         _records.update { inMemory ->
                             val byPath = fromDisk.associateBy { it.filePath }.toMutableMap()
                             for (record in inMemory) byPath[record.filePath] = record
-                            byPath.values.sortedByDescending { it.timestamp }.take(MAX_RECORDS)
+                            trimToCap(byPath.values)
                         }
                     }
             }
@@ -94,14 +140,15 @@ object DownloadHistoryRepository {
     }
 
     /**
-     * Marks a fresh batch as queued, tagging every song with a new shared [DownloadRecord.batchId]
-     * so the history list can group them into one run. A song already present (e.g. a
-     * re-download) has its existing record replaced rather than duplicated -- it moves
-     * to the new batch.
+     * Marks a fresh batch as queued, tagging every song with [batchId] so the history
+     * list can group them into one run. A song already present (e.g. a re-download) has
+     * its existing record replaced rather than duplicated -- it moves to the new batch.
+     * [batchId] defaults to a fresh one for a standalone call; a multi-chunk run passes
+     * its own pre-generated id per chunk instead (see [BatchDownloadService]) so it can
+     * [protectBatches] all of them before any chunk is queued.
      */
-    fun markQueued(songs: List<Song>) {
+    fun markQueued(songs: List<Song>, batchId: String = UUID.randomUUID().toString()) {
         val now = System.currentTimeMillis()
-        val batchId = UUID.randomUUID().toString()
         _records.update { current ->
             val byPath = current.associateBy { it.filePath }.toMutableMap()
             for (song in songs) {
@@ -115,7 +162,7 @@ object DownloadHistoryRepository {
                     batchId = batchId,
                 )
             }
-            byPath.values.sortedByDescending { it.timestamp }.take(MAX_RECORDS)
+            byPath.values.let(::trimToCap)
         }
         persistTrigger.tryEmit(Unit)
     }
@@ -207,7 +254,7 @@ object DownloadHistoryRepository {
             for (record in records) {
                 if (record.filePath !in byPath) byPath[record.filePath] = record
             }
-            byPath.values.sortedByDescending { it.timestamp }.take(MAX_RECORDS)
+            trimToCap(byPath.values)
         }
         persistTrigger.tryEmit(Unit)
     }

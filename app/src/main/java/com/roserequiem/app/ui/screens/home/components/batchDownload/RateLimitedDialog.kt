@@ -7,18 +7,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.roserequiem.app.R
+import com.roserequiem.app.util.Providers
 
 @Composable
-fun RateLimitedDialog(onDismiss: () -> Unit) {
+fun RateLimitedDialog(provider: Providers, onDismiss: () -> Unit) {
     AlertDialog(
         title = {
             Text(text = stringResource(id = R.string.batch_download_lyrics))
         },
         text = {
             Column {
-                Text(text = stringResource(R.string.spotify_api_rate_limit_reached))
+                Text(text = stringResource(R.string.api_rate_limit_reached, provider.displayName))
                 Text(text = stringResource(R.string.please_try_again_later))
-                Text(text = stringResource(R.string.change_api_strategy))
+                Text(text = stringResource(R.string.change_api_strategy_provider, provider.displayName))
             }
         },
         onDismissRequest = onDismiss,

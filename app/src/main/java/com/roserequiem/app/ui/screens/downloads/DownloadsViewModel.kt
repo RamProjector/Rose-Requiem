@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.roserequiem.app.data.DownloadHistoryRepository
@@ -64,7 +64,11 @@ class DownloadsViewModel(
     // Which individual records (by filePath) are checked in multi-select mode. Entering
     // selection mode is implicit: the screen treats "selection mode" as this being
     // non-empty, same pattern HomeViewModel uses for its own song selection.
-    val selectedFilePaths: SnapshotStateList<String> = mutableStateListOf()
+    // SnapshotStateMap, not SnapshotStateList -- same reasoning as HomeViewModel.selectedSongs:
+    // a "download everything" batch can put thousands of rows through this screen, and
+    // Map.containsKey() gives per-key read observation instead of every composed row
+    // recomposing on every single checkbox tap.
+    val selectedFilePaths: SnapshotStateMap<String, Unit> = mutableStateMapOf()
 
     fun onSearchQueryChange(query: String) {
         savedStateHandle[KEY_SEARCH_QUERY] = query
@@ -96,7 +100,7 @@ class DownloadsViewModel(
 
     fun toggleSelected(filePath: String) {
         if (filePath in selectedFilePaths) selectedFilePaths.remove(filePath)
-        else selectedFilePaths.add(filePath)
+        else selectedFilePaths[filePath] = Unit
     }
 
     fun clearSelection() = selectedFilePaths.clear()

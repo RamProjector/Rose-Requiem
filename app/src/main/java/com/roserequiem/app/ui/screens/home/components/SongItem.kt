@@ -60,7 +60,10 @@ fun SongItem(
         ImageRequest.Builder(context).data(data = song.imgUri).apply {
             placeholder(placeholderImage)
             error(placeholderImage)
-            size(240, 240)
+            // 48dp display box (64dp row - 16dp vertical padding) needs at most 192px to
+            // cover xxxhdpi (4x) devices; 240 was already oversized for the old 56dp box
+            // and more so now.
+            size(192, 192)
         }.build(), imageLoader = context.imageLoader
     )
     val songName = song.title ?: stringResource(id = R.string.unknown)
@@ -68,24 +71,33 @@ fun SongItem(
     val bgColor = if (selected) MaterialTheme.colorScheme.surfaceVariant
     else MaterialTheme.colorScheme.surface
     val haptics = LocalHapticFeedback.current
+    // Same reasoning as the call site: onSelectionChanged/onNavigateToSongRequest are now
+    // stable across recompositions unless `song` itself changed, so these two closures can
+    // actually be remembered instead of reallocated on every recomposition of this row.
+    val onClick = remember(quickSelect, selected, onSelectionChanged, onNavigateToSongRequest) {
+        {
+            if (quickSelect)
+                onSelectionChanged(!selected)
+            else
+                onNavigateToSongRequest()
+        }
+    }
+    val onLongClick = remember(selected, onSelectionChanged, haptics) {
+        {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            onSelectionChanged(!selected)
+        }
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(if (showPath) 100.dp else 80.dp)
+            .height(if (showPath) 80.dp else 64.dp)
             .background(bgColor)
             .combinedClickable(
-                onClick = {
-                    if (quickSelect)
-                        onSelectionChanged(!selected)
-                    else
-                        onNavigateToSongRequest()
-                },
-                onLongClick = {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onSelectionChanged(!selected)
-                }
+                onClick = onClick,
+                onLongClick = onLongClick
             )
-            .padding(vertical = 12.dp, horizontal = 24.dp)
+            .padding(vertical = 8.dp, horizontal = 16.dp)
     ) {
         with(sharedTransitionScope) {
             Column {
@@ -112,7 +124,7 @@ fun SongItem(
                             .aspectRatio(1f)
                             .clip(RoundedCornerShape(20f))
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Column(
                         modifier = Modifier.fillMaxHeight(),
                         verticalArrangement = Arrangement.SpaceAround
@@ -120,7 +132,7 @@ fun SongItem(
                         AnimatedText(
                             animate = !disableMarquee,
                             text = songName,
-                            fontSize = 16.sp,
+                            fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.contentColorFor(bgColor),
                             modifier = if (isNavigatingItem) Modifier.sharedBounds(
                                 sharedContentState = rememberSharedContentState(key = "title$filePath"),
@@ -130,7 +142,7 @@ fun SongItem(
                         AnimatedText(
                             animate = !disableMarquee,
                             text = artists,
-                            fontSize = 14.sp,
+                            fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.contentColorFor(bgColor),
                             modifier = if (isNavigatingItem) Modifier.sharedBounds(
                                 sharedContentState = rememberSharedContentState(key = "artist$filePath"),
@@ -144,7 +156,7 @@ fun SongItem(
                     AnimatedText(
                         animate = !disableMarquee,
                         text = filePath.replace(".nowplaying", ""),
-                        fontSize = 12.sp,
+                        fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.contentColorFor(bgColor),
                         // No sharedBounds here: there is no matching "path$..." key on the
                         // destination (SongCard.kt only shares cover/title/artist), so this

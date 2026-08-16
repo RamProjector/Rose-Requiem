@@ -10,6 +10,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.ViewCompat
+import androidx.metrics.performance.JankStats
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -43,6 +45,11 @@ import java.io.File
 class MainActivity : ComponentActivity() {
     private val lyricsProviderService = LyricsProviderService()
 
+    // Held as a field (not just a local in onCreate) so it's unambiguously kept alive for
+    // the Activity's lifetime rather than relying on however JankStats internally retains
+    // itself via its Window/Choreographer listener.
+    private lateinit var jankStats: JankStats
+
     // Bumped (never just set to true/false) every time an ACTION_VIEW_DOWNLOADS intent
     // arrives, whether that's the intent this Activity was created with or one
     // delivered later via onNewIntent -- a plain Boolean wouldn't re-trigger the
@@ -59,6 +66,20 @@ class MainActivity : ComponentActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
             view.setPadding(0, 0, 0, 0)
             insets
+        }
+
+        // window.decorView above already forces the decor view to exist (unlike
+        // peekDecorView(), which JankStats requires to be non-null), so it's safe to set
+        // this up here rather than after setContent. Every janky frame -- system-defined,
+        // not a fixed threshold this app picked -- gets logged with whatever state tags
+        // were active via TrackJankState, so a real device run gives an actual answer
+        // for what's still causing reported jank instead of another guess from source.
+        jankStats = JankStats.createAndTrack(window) { frameData ->
+            if (frameData.isJank) {
+                val durationMs = frameData.frameDurationUiNanos / 1_000_000
+                val stateText = frameData.states.joinToString { "${it.key}=${it.value}" }
+                Log.w("JankStats", "${durationMs}ms  [$stateText]")
+            }
         }
 
         val dataStore = this.dataStore

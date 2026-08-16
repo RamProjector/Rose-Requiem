@@ -10,7 +10,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -48,7 +48,14 @@ class HomeViewModel(
     private val lyricsProviderService: LyricsProviderService
 ) : ViewModel() {
     var cachedSongs: List<Song>? = null
-    val selectedSongs = mutableStateListOf<String>()
+
+    // SnapshotStateMap, not SnapshotStateList: reading `selectedSongs.contains(path)` (or
+    // `containsKey`) inside a row only subscribes that row to changes for that one key.
+    // A SnapshotStateList's .contains() reads the list's whole structural state, so every
+    // currently-composed row -- not just the one being tapped -- recomposes on every
+    // selection change. On a 1000+ song list that's every visible row recomposing per tap
+    // while in selection mode, which is exactly when the user is also actively scrolling.
+    val selectedSongs = mutableStateMapOf<String, Unit>()
     var allSongs by mutableStateOf<List<Song>?>(null)
 
     var isRefreshing by mutableStateOf(false)
@@ -88,7 +95,7 @@ class HomeViewModel(
         if (selectedSongs.isEmpty())
             displaySongs
         else
-            (allSongs ?: listOf()).filter { selectedSongs.contains(it.filePath) }.toList()
+            (allSongs ?: listOf()).filter { selectedSongs.containsKey(it.filePath) }.toList()
     }
 
     init { viewModelScope.launch { updateSongsToDisplay() } }
@@ -282,12 +289,12 @@ class HomeViewModel(
     fun invertSongSelection() = viewModelScope.launch {
         val newSelectedSongs = displaySongs.filter { it.filePath !in selectedSongs }
         selectedSongs.clear()
-        selectedSongs.addAll(newSelectedSongs.mapNotNull { it.filePath })
+        selectedSongs.putAll(newSelectedSongs.mapNotNull { it.filePath }.associateWith { })
     }
 
     fun selectAllDisplayingSongs() = viewModelScope.launch {
         selectedSongs.clear()
-        selectedSongs.addAll(displaySongs.fastMapNotNull { it.filePath })
+        selectedSongs.putAll(displaySongs.fastMapNotNull { it.filePath }.associateWith { })
     }
 
     fun onHideLyricsChange(newHideLyrics: Boolean) {
@@ -326,7 +333,7 @@ class HomeViewModel(
 
     fun selectSong(song: Song, newValue: Boolean) {
         if (newValue) {
-            song.filePath?.let { selectedSongs.add(it) }
+            song.filePath?.let { selectedSongs[it] = Unit }
             showSearch = false
             showingSearch = false
         } else {

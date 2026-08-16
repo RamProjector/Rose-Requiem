@@ -56,7 +56,11 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
     var useDynamicColor by mutableStateOf(dataStore.get(useDynamicColorKey, false))
         private set
 
-    var disableMarquee by mutableStateOf(dataStore.get(disableMarqueeKey, false))
+    // Default true: marquee running on every overflowing title/artist in a 1000+ song
+    // list means continuous per-frame animation on every visible row concurrently with
+    // scroll. Off by default; still available as an opt-in in settings for anyone who
+    // wants full titles without truncation.
+    var disableMarquee by mutableStateOf(dataStore.get(disableMarqueeKey, true))
         private set
 
     var enableAnimations by mutableStateOf(dataStore.get(enableAnimationsKey, false))

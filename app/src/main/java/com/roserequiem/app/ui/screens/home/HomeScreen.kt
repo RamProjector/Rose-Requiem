@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,7 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -57,6 +58,7 @@ import com.roserequiem.app.ui.screens.home.components.HomeSearchBar
 import com.roserequiem.app.ui.screens.home.components.HomeSearchThing
 import com.roserequiem.app.ui.screens.home.components.SongItem
 import com.roserequiem.app.ui.screens.home.components.SortDialog
+import com.roserequiem.app.util.TrackJankState
 import com.roserequiem.app.util.ext.BackPressHandler
 import com.roserequiem.app.util.ext.lowercaseWithLocale
 import com.roserequiem.app.util.ui.SearchFABBoundsTransform
@@ -172,7 +174,7 @@ fun LoadingScreen() {
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenLoaded(
-    selected: SnapshotStateList<String>,
+    selected: SnapshotStateMap<String, Unit>,
     navController: NavHostController,
     viewModel: HomeViewModel,
     scaffoldPadding: PaddingValues,
@@ -184,6 +186,9 @@ fun HomeScreenLoaded(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val refreshState = rememberPullToRefreshState()
+    val listState = rememberLazyListState()
+    TrackJankState("screen", "home")
+    TrackJankState("home_scrolling", listState.isScrollInProgress.toString())
     // Only the row currently being navigated away from needs its sharedBounds trackers
     // active; every other visible row gets a plain Modifier so scrolling isn't paying
     // for shared-element bookkeeping on rows that will never transition. Declared here,
@@ -221,6 +226,7 @@ fun HomeScreenLoaded(
         }
     ) {
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -329,19 +335,21 @@ fun HomeScreenLoaded(
 
             items(
                 count = viewModel.displaySongs.size,
-                key = { index -> viewModel.displaySongs[index].filePath ?: index }
+                key = { index -> viewModel.displaySongs[index].filePath ?: index },
+                contentType = { "song_item" }
             ) { index ->
                 val song = viewModel.displaySongs[index]
 
-                SongItem(
-                    filePath = song.filePath
-                        ?: error("a song in the list of files did not have a file path"),
-                    selected = selected.contains(song.filePath),
-                    quickSelect = selected.size > 0,
-                    onSelectionChanged = { newValue ->
-                        viewModel.selectSong(song, newValue)
-                    },
-                    onNavigateToSongRequest = {
+                // Both callbacks keyed on `song` (an @Immutable data class, so this is a
+                // real structural-equality check, not an identity check): the closure is
+                // only rebuilt when this song's own data changes, not on every recomposition
+                // of this row. Without this, SongItem got two fresh lambda allocations per
+                // row on every recomposition -- small, but it's every visible row, every time.
+                val onSelectionChanged = remember(song) {
+                    { newValue: Boolean -> viewModel.selectSong(song, newValue) }
+                }
+                val onNavigateToSongRequest = remember(song) {
+                    {
                         navigatingFilePath = song.filePath
                         navController.navigate(
                             LyricsFetchScreen(
@@ -351,7 +359,19 @@ fun HomeScreenLoaded(
                                 filePath = song.filePath
                             )
                         )
-                    },
+                    }
+                }
+
+                SongItem(
+                    filePath = song.filePath
+                        ?: error("a song in the list of files did not have a file path"),
+                    // containsKey on a SnapshotStateMap gives per-key read observation --
+                    // only this row is invalidated when this specific key is added/removed,
+                    // instead of every visible row recomposing on any selection change.
+                    selected = selected.containsKey(song.filePath),
+                    quickSelect = selected.size > 0,
+                    onSelectionChanged = onSelectionChanged,
+                    onNavigateToSongRequest = onNavigateToSongRequest,
                     song = song,
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
