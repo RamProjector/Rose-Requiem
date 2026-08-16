@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -171,7 +173,11 @@ fun LoadingScreen() {
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalSharedTransitionApi::class,
+    ExperimentalMaterial3Api::class,
+    ExperimentalFoundationApi::class,
+)
 @Composable
 fun HomeScreenLoaded(
     selected: SnapshotStateMap<String, Unit>,
@@ -186,7 +192,16 @@ fun HomeScreenLoaded(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val refreshState = rememberPullToRefreshState()
-    val listState = rememberLazyListState()
+    // Optimization plan §4.2: default prefetch is a conservative one item ahead of
+    // scroll direction. Widening the ahead window gives AlbumArtFetcher's decode (4.1)
+    // more lead time to finish before a row actually scrolls into view; behind is kept
+    // smaller since it's about retention on backtrack, not decode lead time. 200dp/100dp
+    // (~3/~1.5 of the 64dp row height) is a reasonable starting point, not a measured
+    // optimum -- tune against the plan's own FrameTimingMetric benchmark (4.4) rather
+    // than take these numbers as final.
+    val listState = rememberLazyListState(
+        cacheWindow = LazyLayoutCacheWindow(ahead = 200.dp, behind = 100.dp),
+    )
     TrackJankState("screen", "home")
     TrackJankState("home_scrolling", listState.isScrollInProgress.toString())
     // Only the row currently being navigated away from needs its sharedBounds trackers
