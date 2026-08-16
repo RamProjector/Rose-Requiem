@@ -35,6 +35,7 @@ import coil3.compose.rememberAsyncImagePainter
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import com.roserequiem.app.R
+import com.roserequiem.app.data.media.albumArtSongId
 import com.roserequiem.app.domain.model.Song
 import com.roserequiem.app.ui.components.AnimatedText
 
@@ -64,6 +65,10 @@ fun SongItem(
             // cover xxxhdpi (4x) devices; 240 was already oversized for the old 56dp box
             // and more so now.
             size(192, 192)
+            // Lets AlbumArtFetcher try a per-song thumbnail (API 29+) ahead of the legacy
+            // albumart URI above -- see AlbumArtFetcher's kdoc. No-op when null (songs not
+            // sourced from the live MediaStore scan), same as before this existed.
+            song.mediaStoreId?.let { albumArtSongId(it) }
         }.build(), imageLoader = context.imageLoader
     )
     val songName = song.title ?: stringResource(id = R.string.unknown)

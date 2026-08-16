@@ -8,6 +8,7 @@ import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.roserequiem.app.data.DownloadHistoryRepository
+import com.roserequiem.app.data.media.AlbumArtFetcher
 import okhttp3.OkHttpClient
 import okio.Path.Companion.toOkioPath
 
@@ -41,6 +42,10 @@ class RoseRequiemApplication : Application(), SingletonImageLoader.Factory {
     override fun newImageLoader(context: PlatformContext): ImageLoader {
         return ImageLoader.Builder(context)
             .components {
+                // Ordered before the built-in content-URI handling: AlbumArtFetcher tries
+                // a per-song thumbnail first and returns null to defer to Coil's default
+                // handling of the same (untouched) legacy URI when it can't. See its kdoc.
+                add(AlbumArtFetcher.Factory())
                 add(OkHttpNetworkFetcherFactory(callFactory = { okHttpClient }))
             }
             .memoryCache {

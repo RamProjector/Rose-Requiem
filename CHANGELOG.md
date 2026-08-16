@@ -9,6 +9,22 @@ loosely as an app (rather than a library) reasonably can.
 Versions before 4.4.0 predate this file — there's no reliable record of
 what changed in them, so they aren't reconstructed here.
 
+## [Unreleased]
+
+### Changed
+- Home list album art now tries a per-song `ContentResolver#loadThumbnail()` (API 29+)
+  ahead of the legacy `content://media/external/audio/albumart/<id>` pseudo-provider,
+  via a new `AlbumArtFetcher` registered on the app's `ImageLoader`. The legacy path
+  (undocumented, and inconsistent in speed/behavior across OEM skins and Android
+  versions) is unchanged and still used as the fallback on API 23-28, or if the modern
+  path throws — `AlbumArtFetcher` returns `null` in those cases rather than handling
+  them itself, letting Coil's own built-in content-URI fetcher take over exactly as it
+  does today. `Song` gained a `mediaStoreId` field (the row's `MediaStore.Audio.Media._ID`,
+  already read during the library scan but previously discarded) so the fetcher can
+  address the song's own MediaStore URI without a second query. First item from the
+  home-scroll optimization plan's Part 4.1 — highest-confidence, zero-new-dependency
+  change, cross-validated against Gramophone's independent album-art pipeline.
+
 ## [4.4.0]
 
 ### Fixed

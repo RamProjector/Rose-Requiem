@@ -149,12 +149,14 @@ class HomeViewModel(
             )
 
             cursor?.use {
+                val idColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
                 val titleColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
                 val artistColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
                 val albumIdColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
                 val pathColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
 
                 while (it.moveToNext()) {
+                    val id = it.getLong(idColumn)
                     val title = it.getString(titleColumn).let { str ->
                         if (str == "<unknown>") null else str
                     }
@@ -171,7 +173,9 @@ class HomeViewModel(
                         albumId
                     )
 
-                    val song = Song(title, artist, imgUri, filePath)
+                    // mediaStoreId retained (not just used locally) so AlbumArtFetcher can
+                    // request a per-song thumbnail on API 29+ -- see Song.mediaStoreId kdoc.
+                    val song = Song(title, artist, imgUri, filePath, mediaStoreId = id)
                     songs.add(song)
                 }
             }
