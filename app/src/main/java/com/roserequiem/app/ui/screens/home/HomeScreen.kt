@@ -1,5 +1,9 @@
 package com.roserequiem.app.ui.screens.home
 
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
+import android.provider.MediaStore
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -26,16 +30,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
@@ -46,8 +47,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import com.roserequiem.app.R
 import com.roserequiem.app.domain.model.Song
 import com.roserequiem.app.ui.LyricsFetchScreen
@@ -190,8 +189,32 @@ fun HomeScreenLoaded(
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val refreshState = rememberPullToRefreshState()
+
+    // §4.3: replaces manual pull-to-refresh, removing one of the two nested-scroll
+    // participants that intercepted every scroll delta (this one, and Scaffold's
+    // collapsing-TopAppBar connection above HomeScreenLoaded's caller). A
+    // ContentObserver is a passive registration -- the system calls onChange() only
+    // when MediaStore's audio table actually changes (a file added/removed/rescanned),
+    // so nothing here runs per-frame or per-scroll.
+    DisposableEffect(Unit) {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                viewModel.cachedSongs = null
+                viewModel.updateAllSongs(
+                    context,
+                    viewModel.userSettingsController.sortBy,
+                    viewModel.userSettingsController.sortOrder
+                )
+            }
+        }
+        context.contentResolver.registerContentObserver(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            true, // notifyForDescendants: catch inserts/deletes/updates anywhere
+            // under the audio table, not just this exact URI.
+            observer
+        )
+        onDispose { context.contentResolver.unregisterContentObserver(observer) }
+    }
     // Optimization plan §4.2: default prefetch is a conservative one item ahead of
     // scroll direction. Widening the ahead window gives AlbumArtFetcher's decode (4.1)
     // more lead time to finish before a row actually scrolls into view; behind is kept
@@ -218,185 +241,162 @@ fun HomeScreenLoaded(
             onDone = { onBatchDownloadState(false) })
     }
 
-    PullToRefreshBox(
-        isRefreshing = viewModel.isRefreshing,
-        state = refreshState,
-        onRefresh = {
-            viewModel.isRefreshing = true
-            scope.launch {
-                viewModel.cachedSongs = null
-                viewModel.updateAllSongs(context, viewModel.userSettingsController.sortBy, viewModel.userSettingsController.sortOrder)
-                delay(1000) // spinner
-                viewModel.isRefreshing = false
-            }
-        },
-        indicator = {
-            Indicator(
-                state = refreshState,
-                isRefreshing = viewModel.isRefreshing,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = scaffoldPadding.calculateTopPadding()),
-            )
-        }
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        contentPadding = scaffoldPadding
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = scaffoldPadding
-        ) {
-            item {
-                Column(
-                    modifier = Modifier.padding(
-                        top = 5.dp,
-                        bottom = 5.dp,
-                        start = 22.dp,
-                        end = 4.dp
-                    ),
-                ) {
-                    HomeSearchThing(
-                        showingSearch = viewModel.showingSearch,
-                        searchBar = {
-                            HomeSearchBar(
-                                query = viewModel.searchQuery,
-                                onQueryChange = { newQuery ->
-                                    viewModel.searchQuery = newQuery
-                                    viewModel.updateSearchResults(newQuery.lowercaseWithLocale())
-                                    viewModel.showingSearch = true
-                                },
-                                showSearch = viewModel.showSearch,
-                                onShowSearchChange = { viewModel.showSearch = it },
-                                showingSearch = viewModel.showingSearch,
-                                onShowingSearchChange = { viewModel.showingSearch = it }
-                            )
-                        },
-                        filterBar = {
-                            FilterAndSongCount(
-                                displaySongsCount = viewModel.displaySongs.size,
-                                onFilterClick = { viewModel.showFilters = true },
-                                onSortClick = { viewModel.showSort = true },
-                                onSearchClick = {
-                                    viewModel.showSearch = true
-                                    viewModel.showingSearch = true
-                                }
-                            )
-                        }
-                    )
-
-                    if (viewModel.showSort) {
-                        SortDialog(
-                            userSettingsController = viewModel.userSettingsController,
-                            onDismiss = { viewModel.showSort = false },
-                            onSortOrderChange = {
-                                viewModel.userSettingsController.updateSortOrder(
-                                    it
-                                )
+        item {
+            Column(
+                modifier = Modifier.padding(
+                    top = 5.dp,
+                    bottom = 5.dp,
+                    start = 22.dp,
+                    end = 4.dp
+                ),
+            ) {
+                HomeSearchThing(
+                    showingSearch = viewModel.showingSearch,
+                    searchBar = {
+                        HomeSearchBar(
+                            query = viewModel.searchQuery,
+                            onQueryChange = { newQuery ->
+                                viewModel.searchQuery = newQuery
+                                viewModel.updateSearchResults(newQuery.lowercaseWithLocale())
+                                viewModel.showingSearch = true
                             },
-                            onSortByChange = { viewModel.userSettingsController.updateSortBy(it) }
+                            showSearch = viewModel.showSearch,
+                            onShowSearchChange = { viewModel.showSearch = it },
+                            showingSearch = viewModel.showingSearch,
+                            onShowingSearchChange = { viewModel.showingSearch = it }
+                        )
+                    },
+                    filterBar = {
+                        FilterAndSongCount(
+                            displaySongsCount = viewModel.displaySongs.size,
+                            onFilterClick = { viewModel.showFilters = true },
+                            onSortClick = { viewModel.showSort = true },
+                            onSearchClick = {
+                                viewModel.showSearch = true
+                                viewModel.showingSearch = true
+                            }
                         )
                     }
+                )
 
-                    if (viewModel.showFilters) {
-                        FiltersDialog(
-                            hideLyrics = viewModel.userSettingsController.hideLyrics,
-                            folders = viewModel.getSongFolders(context),
-                            blacklistedFolders = viewModel.userSettingsController.blacklistedFolders,
-                            onDismiss = { viewModel.showFilters = false },
-                            onFilterChange = { viewModel.filterSongs() },
-                            onHideLyricsChange = viewModel::onHideLyricsChange,
-                            onToggleFolderBlacklist = viewModel::onToggleFolderBlacklist
-                        )
-                    }
-                }
-            }
-
-            item {
-                if (viewModel.playingSongTitle.isNotEmpty()) {
-                    Text(stringResource(id = R.string.now_playing_song))
-                    SongItem(
-                        filePath = viewModel.playingSongFilePath,
-                        selected = false,
-                        quickSelect = false,
-                        onSelectionChanged = {},
-                        onNavigateToSongRequest = {
-                            navigatingFilePath = viewModel.playingSongFilePath
-                            navController.navigate(
-                                LyricsFetchScreen(
-                                    songName = viewModel.playingSongTitle,
-                                    artists = viewModel.playingSongArtist,
-                                    coverUri = viewModel.playingSongAlbumArt.toString(),
-                                    filePath = viewModel.playingSongFilePath
-                                )
+                if (viewModel.showSort) {
+                    SortDialog(
+                        userSettingsController = viewModel.userSettingsController,
+                        onDismiss = { viewModel.showSort = false },
+                        onSortOrderChange = {
+                            viewModel.userSettingsController.updateSortOrder(
+                                it
                             )
                         },
-                        song = Song(
-                            title = viewModel.playingSongTitle,
-                            artist = viewModel.playingSongArtist,
-                            imgUri = viewModel.playingSongAlbumArt,
-                            filePath = viewModel.playingSongFilePath
-                        ),
-                        sharedTransitionScope = sharedTransitionScope,
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        disableMarquee = viewModel.userSettingsController.disableMarquee,
-                        showPath = viewModel.userSettingsController.showPath,
-                        isNavigatingItem = navigatingFilePath == viewModel.playingSongFilePath
+                        onSortByChange = { viewModel.userSettingsController.updateSortBy(it) }
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    HorizontalDivider()
+                }
+
+                if (viewModel.showFilters) {
+                    FiltersDialog(
+                        hideLyrics = viewModel.userSettingsController.hideLyrics,
+                        folders = viewModel.getSongFolders(context),
+                        blacklistedFolders = viewModel.userSettingsController.blacklistedFolders,
+                        onDismiss = { viewModel.showFilters = false },
+                        onFilterChange = { viewModel.filterSongs() },
+                        onHideLyricsChange = viewModel::onHideLyricsChange,
+                        onToggleFolderBlacklist = viewModel::onToggleFolderBlacklist
+                    )
                 }
             }
+        }
 
-            items(
-                count = viewModel.displaySongs.size,
-                key = { index -> viewModel.displaySongs[index].filePath ?: index },
-                contentType = { "song_item" }
-            ) { index ->
-                val song = viewModel.displaySongs[index]
-
-                // Both callbacks keyed on `song` (an @Immutable data class, so this is a
-                // real structural-equality check, not an identity check): the closure is
-                // only rebuilt when this song's own data changes, not on every recomposition
-                // of this row. Without this, SongItem got two fresh lambda allocations per
-                // row on every recomposition -- small, but it's every visible row, every time.
-                val onSelectionChanged = remember(song) {
-                    { newValue: Boolean -> viewModel.selectSong(song, newValue) }
-                }
-                val onNavigateToSongRequest = remember(song) {
-                    {
-                        navigatingFilePath = song.filePath
+        item {
+            if (viewModel.playingSongTitle.isNotEmpty()) {
+                Text(stringResource(id = R.string.now_playing_song))
+                SongItem(
+                    filePath = viewModel.playingSongFilePath,
+                    selected = false,
+                    quickSelect = false,
+                    onSelectionChanged = {},
+                    onNavigateToSongRequest = {
+                        navigatingFilePath = viewModel.playingSongFilePath
                         navController.navigate(
                             LyricsFetchScreen(
-                                songName = song.title ?: error("song.title was null"),
-                                artists = song.artist ?: "",
-                                coverUri = song.imgUri.toString(),
-                                filePath = song.filePath
+                                songName = viewModel.playingSongTitle,
+                                artists = viewModel.playingSongArtist,
+                                coverUri = viewModel.playingSongAlbumArt.toString(),
+                                filePath = viewModel.playingSongFilePath
                             )
                         )
-                    }
-                }
-
-                SongItem(
-                    filePath = song.filePath
-                        ?: error("a song in the list of files did not have a file path"),
-                    // containsKey on a SnapshotStateMap gives per-key read observation --
-                    // only this row is invalidated when this specific key is added/removed,
-                    // instead of every visible row recomposing on any selection change.
-                    selected = selected.containsKey(song.filePath),
-                    quickSelect = selected.size > 0,
-                    onSelectionChanged = onSelectionChanged,
-                    onNavigateToSongRequest = onNavigateToSongRequest,
-                    song = song,
+                    },
+                    song = Song(
+                        title = viewModel.playingSongTitle,
+                        artist = viewModel.playingSongArtist,
+                        imgUri = viewModel.playingSongAlbumArt,
+                        filePath = viewModel.playingSongFilePath
+                    ),
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
                     disableMarquee = viewModel.userSettingsController.disableMarquee,
                     showPath = viewModel.userSettingsController.showPath,
-                    isNavigatingItem = navigatingFilePath == song.filePath
+                    isNavigatingItem = navigatingFilePath == viewModel.playingSongFilePath
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+                HorizontalDivider()
+            }
+        }
+
+        items(
+            count = viewModel.displaySongs.size,
+            key = { index -> viewModel.displaySongs[index].filePath ?: index },
+            contentType = { "song_item" }
+        ) { index ->
+            val song = viewModel.displaySongs[index]
+
+            // Both callbacks keyed on `song` (an @Immutable data class, so this is a
+            // real structural-equality check, not an identity check): the closure is
+            // only rebuilt when this song's own data changes, not on every recomposition
+            // of this row. Without this, SongItem got two fresh lambda allocations per
+            // row on every recomposition -- small, but it's every visible row, every time.
+            val onSelectionChanged = remember(song) {
+                { newValue: Boolean -> viewModel.selectSong(song, newValue) }
+            }
+            val onNavigateToSongRequest = remember(song) {
+                {
+                    navigatingFilePath = song.filePath
+                    navController.navigate(
+                        LyricsFetchScreen(
+                            songName = song.title ?: error("song.title was null"),
+                            artists = song.artist ?: "",
+                            coverUri = song.imgUri.toString(),
+                            filePath = song.filePath
+                        )
+                    )
+                }
             }
 
-            item { Spacer(modifier = Modifier.height(4.dp)) }
+            SongItem(
+                filePath = song.filePath
+                    ?: error("a song in the list of files did not have a file path"),
+                // containsKey on a SnapshotStateMap gives per-key read observation --
+                // only this row is invalidated when this specific key is added/removed,
+                // instead of every visible row recomposing on any selection change.
+                selected = selected.containsKey(song.filePath),
+                quickSelect = selected.size > 0,
+                onSelectionChanged = onSelectionChanged,
+                onNavigateToSongRequest = onNavigateToSongRequest,
+                song = song,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+                disableMarquee = viewModel.userSettingsController.disableMarquee,
+                showPath = viewModel.userSettingsController.showPath,
+                isNavigatingItem = navigatingFilePath == song.filePath
+            )
         }
+
+        item { Spacer(modifier = Modifier.height(4.dp)) }
     }
 }

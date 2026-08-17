@@ -24,6 +24,16 @@ what changed in them, so they aren't reconstructed here.
   address the song's own MediaStore URI without a second query. First item from the
   home-scroll optimization plan's Part 4.1 — highest-confidence, zero-new-dependency
   change, cross-validated against Gramophone's independent album-art pipeline.
+- Widened the Home list's scroll prefetch window (plan §4.2) via Compose Foundation's
+  `LazyLayoutCacheWindow` (200dp ahead / 100dp behind, replacing the one-item-ahead
+  default), giving the album art fetch above more lead time to finish decoding before
+  a row scrolls into view.
+- Removed pull-to-refresh from the Home list (plan §4.3). The library now refreshes
+  itself automatically via a `ContentObserver` on `MediaStore.Audio.Media`, so it
+  picks up added/removed/rescanned files without a manual gesture. This also removes
+  one of the two nested-scroll participants (`PullToRefreshBox`'s own connection,
+  alongside the collapsing top bar's) that were intercepting every scroll delta on
+  this screen.
 
 ## [4.4.0]
 

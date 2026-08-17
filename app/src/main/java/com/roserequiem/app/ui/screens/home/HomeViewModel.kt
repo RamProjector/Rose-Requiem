@@ -58,8 +58,6 @@ class HomeViewModel(
     val selectedSongs = mutableStateMapOf<String, Unit>()
     var allSongs by mutableStateOf<List<Song>?>(null)
 
-    var isRefreshing by mutableStateOf(false)
-
     var searchQuery by mutableStateOf("")
 
     var playingSongTitle by mutableStateOf("")
