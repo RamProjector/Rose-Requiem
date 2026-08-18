@@ -20,15 +20,25 @@ import org.junit.Test
  * so app-launch time doesn't get counted as "scroll" jank.
  *
  * HOW TO RUN THIS:
- * `./gradlew :baselineprofile:pixel6Api34DebugAndroidTest --tests "*HomeScrollBenchmark*"`
- * Same hardware-virtualization requirement as BaselineProfileGenerator -- see its kdoc
- * if you hit that wall. The managed-device task name follows Gradle's
- * `<deviceName><BuildVariant>AndroidTest` convention; if that exact string doesn't
- * resolve on your AGP version, `./gradlew :baselineprofile:tasks --all` will show the
- * real one.
+ * On a real device: `./gradlew :baselineprofile:pixel6Api34DebugAndroidTest --tests "*HomeScrollBenchmark*"`
+ * (same hardware-virtualization requirement as BaselineProfileGenerator -- see its kdoc
+ * if you hit that wall; the managed-device task name follows Gradle's
+ * `<deviceName><BuildVariant>AndroidTest` convention, so `./gradlew :baselineprofile:tasks --all`
+ * will show the real one if that string doesn't resolve on your AGP version).
  *
- * HOW TO READ THE RESULT: results land in Logcat (filter for "Benchmark") and as JSON
- * under `baselineprofile/build/outputs/connected_android_test_additional_output/` --
+ * On an emulator (including CI -- see .github/workflows/scroll-performance.yml, which
+ * runs this exact task), MacrobenchmarkRule refuses to run at all unless you add
+ * `-Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR`:
+ * an emulator's absolute timings aren't representative of a real device, so the library
+ * guards against them by default. Suppressing the guard still gives you numbers that
+ * are valid for *comparing one commit against another on the same hardware* -- which is
+ * this file's actual purpose -- just don't read the absolute frame-duration numbers as
+ * "what a user's phone will see."
+ *
+ * HOW TO READ THE RESULT: results land in Logcat (filter for "Benchmark") regardless of
+ * device -- that's the reliable path. They're also written as JSON somewhere under
+ * `baselineprofile/build/outputs/` (exact subpath depends on managed vs. connected
+ * device and wasn't something I could confirm without a real run to check against).
  * `frameDurationCpuMs` P50/P90/P99 and the janky-frame percentage are the numbers that
  * matter. Run once before a change, once after -- or, per the plan's "measured
  * independently" guidance for §4.2 and §4.3, once per commit rather than only

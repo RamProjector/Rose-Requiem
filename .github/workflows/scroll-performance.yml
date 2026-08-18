@@ -1,0 +1,96 @@
+name: Scroll Performance
+
+# Manual only -- an emulator boot + 5 benchmark iterations takes real minutes, not
+# something to run on every push. Trigger from the Actions tab (or `gh workflow run
+# scroll-performance.yml -f task=benchmark`) against whichever branch/commit you want
+# a number for.
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "What to run"
+        required: true
+        default: "benchmark"
+        type: choice
+        options:
+          - benchmark
+          - baseline-profile
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    name: ${{ inputs.task == 'benchmark' && 'Run HomeScrollBenchmark' || 'Regenerate baseline profile' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      # Both tasks below spin up the pixel6Api34 Gradle Managed Device already
+      # declared in baselineprofile/build.gradle.kts (same one BaselineProfileGenerator's
+      # kdoc says needs "a PC/Mac, or CI" -- this is the CI half of that sentence).
+      # Managed Devices provision their own emulator; nothing here calls the
+      # reactivecircus/android-emulator-runner action or similar, and none of the
+      # module's existing config needs to change (useConnectedDevices stays false).
+      #
+      # Without this step it still works, just 10-15x slower: GitHub's ubuntu-latest
+      # runners support hardware-accelerated (KVM) emulation, but /dev/kvm isn't
+      # group-writable by default.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # androidx.benchmark.suppressErrors=EMULATOR: MacrobenchmarkRule refuses to run
+      # on an emulator by default (an emulator's absolute timings aren't representative
+      # of a real device -- it shares CPU with whatever else is on the runner). This
+      # override is what lets HomeScrollBenchmark run here at all. The numbers you get
+      # are still meaningful for what this workflow is for -- diffing one commit
+      # against another on the *same* CI hardware -- just don't read the absolute
+      # frame-duration numbers as "what a user's phone will see."
+      - name: Run HomeScrollBenchmark (plan §4.4)
+        if: ${{ inputs.task == 'benchmark' }}
+        run: |
+          ./gradlew :baselineprofile:pixel6Api34DebugAndroidTest \
+            --tests "*HomeScrollBenchmark*" \
+            -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR
+
+      # androidx.benchmark.enabledRules=BaselineProfile: this module now has both a
+      # BaselineProfileRule test (BaselineProfileGenerator) and a MacrobenchmarkRule
+      # test (HomeScrollBenchmark). Without this filter, generateBaselineProfile would
+      # also try to run HomeScrollBenchmark and hit the same EMULATOR guard above.
+      - name: Regenerate baseline profile
+        if: ${{ inputs.task == 'baseline-profile' }}
+        run: |
+          ./gradlew :baselineprofile:generateBaselineProfile \
+            -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
+
+      # Path is a broad net, not a verified exact one -- Gradle Managed Device output
+      # location (managed_device_android_test_additional_output/... vs a JSON report
+      # elsewhere under build/outputs/) wasn't something I could confirm against a real
+      # run. warn rather than fail if this misses; check the raw Logcat output in the
+      # step above either way, it has the same numbers.
+      - name: Upload benchmark results
+        if: ${{ inputs.task == 'benchmark' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: scroll-benchmark-results
+          path: baselineprofile/build/outputs/**
+          if-no-files-found: warn
+
+      - name: Upload regenerated baseline profile
+        if: ${{ inputs.task == 'baseline-profile' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-profile
+          path: app/src/main/baseline-prof.txt
+          if-no-files-found: warn
