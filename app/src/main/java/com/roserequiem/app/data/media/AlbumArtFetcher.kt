@@ -1,5 +1,6 @@
 package com.roserequiem.app.data.media
 
+import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.os.Build
 import android.provider.MediaStore
@@ -47,6 +48,8 @@ import coil3.request.Options
  */
 class AlbumArtFetcher(private val options: Options) : Fetcher {
 
+    // Factory.create() returns this Fetcher only on API 29+, so this guarded call is safe.
+    @SuppressLint("NewApi")
     override suspend fun fetch(): FetchResult? {
         val songId = options.albumArtSongId
         if (songId <= 0) return null
