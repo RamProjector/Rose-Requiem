@@ -363,8 +363,10 @@ class HomeViewModel(
         }
         playingSongAlbumArt = try {
             metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)!!.let {
-                // not same name of files because img won't update, cache dir cleared at app start
-                val file = File(context.cacheDir, "${UUID.randomUUID()}.jpg")
+                // Use unique transient snapshots without clearing Coil's persistent disk cache.
+                val nowPlayingArtDir = File(context.cacheDir, "now_playing_art")
+                nowPlayingArtDir.mkdirs()
+                val file = File(nowPlayingArtDir, "${UUID.randomUUID()}.jpg")
                 file.outputStream().use { out -> it.compress(Bitmap.CompressFormat.JPEG, 100, out) }
                 Uri.parse(file.absolutePath)
             }
