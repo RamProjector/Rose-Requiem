@@ -94,7 +94,9 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
 
             LaunchedEffect(Unit) {
-                context.cacheDir.deleteRecursively()
+                // Clear only transient now-playing artwork. Coil's persistent album-art
+                // disk cache lives in cacheDir/album_art_cache and must survive launches.
+                File(context.cacheDir, "now_playing_art").deleteRecursively()
                 if (networkError == null) lyricsProviderService
                     .refreshSpotifyToken()
                     .onFailure { networkError = true }
