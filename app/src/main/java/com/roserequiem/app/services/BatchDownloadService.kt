@@ -378,7 +378,12 @@ class BatchDownloadService : Service() {
                 putParcelableArrayListExtra(EXTRA_SONGS, songs)
                 putExtra(EXTRA_IGNORE_EMBEDDED_LYRICS, ignoreEmbeddedLyrics)
             }
-            context.startForegroundService(intent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                @Suppress("DEPRECATION")
+                context.startService(intent)
+            }
         }
 
         fun cancel(context: Context) {
