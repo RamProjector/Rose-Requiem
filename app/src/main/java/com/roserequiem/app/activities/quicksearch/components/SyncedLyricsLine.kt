@@ -58,7 +58,7 @@ fun SyncedLyricsColumn(
     Column(
         modifier = modifier.verticalScroll(rememberScrollState())
     ) {
-        lyricsList.forEach { (time, lyrics) ->
+        for ((time, lyrics) in lyricsList) {
             SyncedLyricsLine(time = time, lyrics = lyrics)
             Spacer(modifier = Modifier.height(4.dp))
         }
