@@ -28,7 +28,16 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: java-kotlin
-          build-mode: autobuild
+          build-mode: manual
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: "17"
+
+      - name: Build and compile test sources
+        run: ./gradlew testDebugUnitTest
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4
