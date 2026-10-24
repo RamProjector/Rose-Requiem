@@ -98,4 +98,3 @@ fun Modifier.repeatingClickable(
             }
         }
     }
-)
