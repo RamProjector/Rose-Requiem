@@ -1,5 +1,8 @@
 name: Build APK
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -14,14 +17,6 @@ jobs:
     name: Build debug APK
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: write
-      checks: write
-      pull-requests: write
-      statuses: write
-      security-events: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,6 +26,12 @@ jobs:
         with:
           distribution: "zulu"
           java-version: "17"
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Run Android lint
+        run: ./gradlew lintDebug
 
       - name: Build debug APK
         run: ./gradlew assembleDebug
@@ -42,7 +43,7 @@ jobs:
           path: ./app/build/outputs/apk/debug/app-debug.apk
 
   build-release:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     name: Build signed release APK
     runs-on: ubuntu-latest
 
