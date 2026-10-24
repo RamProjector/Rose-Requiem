@@ -87,7 +87,7 @@ fun SortOrderRadioGroup(
                 RadioButton(
                     selected = userSettingsController.sortOrder == sortOrder,
                     onClick = {
-                        onSortOrderChange(it)
+                        onSortOrderChange(sortOrder)
                     }
                 )
                 Text(stringResource(sortOrder.displayName))
@@ -113,7 +113,7 @@ fun SortByRadioGroup(
                 RadioButton(
                     selected = userSettingsController.sortBy == sortValue,
                     onClick = {
-                        onSortByChange(it)
+                        onSortByChange(sortValue)
                     }
                 )
                 Text(stringResource(sortValue.displayName))
