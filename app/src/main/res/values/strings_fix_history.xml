@@ -1,3 +1,3 @@
 <resources>
-    <string name="fix_history">Fix history</string>
+    <string name="fix_history" translatable="false">Fix history</string>
 </resources>
