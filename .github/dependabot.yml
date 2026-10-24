@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 8
+    labels:
+      - dependencies
+    groups:
+      compose-minor-patch:
+        patterns:
+          - "androidx.compose:*"
+        update-types:
+          - minor
+          - patch
+      android-test-minor-patch:
+        patterns:
+          - "androidx.test:*"
+          - "androidx.benchmark:*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
