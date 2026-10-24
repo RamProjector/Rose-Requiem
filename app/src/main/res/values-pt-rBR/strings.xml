@@ -168,8 +168,8 @@
     <string name="include_romanization">Incluir romanização</string>
     <string name="include_romanization_summary">Incluir letras romanizadas ao obter letras de músicas do provedor Netease</string>
     <plurals name="songs_count">
-        <item quantity="one">canção</item>
-        <item quantity="many">canções</item>
-        <item quantity="other">canções</item>
+        <item quantity="one">%1$d canção</item>
+        <item quantity="many">%1$d canções</item>
+        <item quantity="other">%1$d canções</item>
     </plurals>
 </resources>
