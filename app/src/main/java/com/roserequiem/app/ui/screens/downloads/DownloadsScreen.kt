@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -68,6 +69,8 @@ fun DownloadsScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val statusFilter by viewModel.statusFilter.collectAsState()
     val context = LocalContext.current
+    val resources = LocalResources.current
+    val undoLabel = stringResource(R.string.undo)
 
     // Mirrors whether a batch is running elsewhere (e.g. started from Home) so
     // Continue/Retry can be withheld below -- only one batch runs at a time.
@@ -95,12 +98,12 @@ fun DownloadsScreen(
     fun offerUndo(removed: List<DownloadRecord>) {
         if (removed.isEmpty()) return
         coroutineScope.launch {
-            val message = context.resources.getQuantityString(
+            val message = resources.getQuantityString(
                 R.plurals.downloads_removed, removed.size, removed.size,
             )
             val result = snackbarHostState.showSnackbar(
                 message = message,
-                actionLabel = context.getString(R.string.undo),
+                actionLabel = undoLabel,
                 duration = SnackbarDuration.Long,
             )
             if (result == SnackbarResult.ActionPerformed) {
@@ -167,7 +170,7 @@ fun DownloadsScreen(
                     // expanding a big batch janky-to-crashy. Flattened into real lazy
                     // items like this, only whatever's actually scrolled into view is ever
                     // composed, regardless of how large the batch is.
-                    visibleBatches.forEach { filteredBatch ->
+                    for (filteredBatch in visibleBatches) {
                         val batch = filteredBatch.summary
 
                         if (batch.total == 1) {
