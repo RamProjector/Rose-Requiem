@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
 
             LaunchedEffect(Unit) {
-                context.cacheDir.deleteRecursively()
+                File(context.cacheDir, "now_playing_art").deleteRecursively()
                 if (networkError == null) lyricsProviderService
                     .refreshSpotifyToken()
                     .onFailure { networkError = true }
