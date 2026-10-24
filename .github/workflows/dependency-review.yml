@@ -17,6 +17,6 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Review dependencies
-        uses: actions/dependency-review-action@595b5aeba73380359d98f5e9a3e4d2b6d3b7c3c # v4
+        uses: actions/dependency-review-action@bde01290d367cf6ae7232580700fcca870e35a80 # v4.7.3
         with:
           fail-on-severity: moderate
