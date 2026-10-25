@@ -37,6 +37,7 @@ import com.roserequiem.app.ui.ScreenDownloads
 import com.roserequiem.app.ui.components.dialogs.NoInternetDialog
 import com.roserequiem.app.ui.theme.RoseRequiemTheme
 import com.roserequiem.app.util.dataStore
+import com.roserequiem.app.util.usesAllFilesAccessPermission
 import java.io.File
 
 /**
@@ -169,7 +170,9 @@ class MainActivity : ComponentActivity() {
 private fun MainActivity.CheckForPermissions(
     userSettingsController: UserSettingsController
 ) {
-    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+        usesAllFilesAccessPermission(Build.VERSION.SDK_INT)
+    ) {
         if (!Environment.isExternalStorageManager()) {
             userSettingsController.updatePassedInit(false)
         }
