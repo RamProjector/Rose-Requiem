@@ -104,8 +104,7 @@ class LyricsFetchViewModel(
         }.onSuccess {
             showToast(context, R.string.file_saved_to, file.absolutePath)
         }.onFailure {
-            // SAF/storage failures are expected user-facing failures, not app crashes.
-            // In particular, Android 6–10 users may need to configure or reselect the SD-card folder.
+            // Storage/SAF failures should be shown to the user rather than crash the lyrics screen.
             showToast(context, R.string.lyrics_save_failed)
         }
     }
@@ -142,8 +141,12 @@ class LyricsFetchViewModel(
             )
         }.onFailure { exception ->
             showToast(context, resolveEmbedErrorMessage(context, exception))
-        }.onSuccess {
-            showToast(context, R.string.embedded_lyrics_in_file)
+        }.onSuccess { saved ->
+            if (saved) {
+                showToast(context, R.string.embedded_lyrics_in_file)
+            } else {
+                showToast(context, R.string.embed_lyrics_save_failed)
+            }
         }
     }
 
