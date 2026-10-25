@@ -89,19 +89,25 @@ class LyricsFetchViewModel(
         val lrcContent = generateLrcContent(song, lyrics, generatedUsingString, lrcOffset, userSettingsController.directlyModifyTimestamps)
         val file = newLyricsFilePath(filePath, song)
 
-        if (!isLegacyFileAccessRequired(filePath)) {
-            file.writeText(lrcContent)
-        } else {
-            saveToExternalPath(
-                context = context,
-                sourceFilePath = filePath,
-                lrc = lrcContent,
-                fileName = file.name,
-                newLyricsFilePath = userSettingsController.sdCardPath
-            )
+        runCatching {
+            if (!isLegacyFileAccessRequired(filePath)) {
+                file.writeText(lrcContent)
+            } else {
+                saveToExternalPath(
+                    context = context,
+                    sourceFilePath = filePath,
+                    lrc = lrcContent,
+                    fileName = file.name,
+                    newLyricsFilePath = userSettingsController.sdCardPath
+                )
+            }
+        }.onSuccess {
+            showToast(context, R.string.file_saved_to, file.absolutePath)
+        }.onFailure {
+            // SAF/storage failures are expected user-facing failures, not app crashes.
+            // In particular, Android 6–10 users may need to configure or reselect the SD-card folder.
+            showToast(context, R.string.lyrics_save_failed)
         }
-
-        showToast(context, R.string.file_saved_to, file.absolutePath)
     }
 
     private fun loadLyrics(songInfo: SongInfo) {
