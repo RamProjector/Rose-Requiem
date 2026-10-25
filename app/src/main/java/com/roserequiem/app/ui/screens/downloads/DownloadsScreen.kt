@@ -68,6 +68,7 @@ fun DownloadsScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val statusFilter by viewModel.statusFilter.collectAsState()
     val context = LocalContext.current
+    val undoLabel = stringResource(R.string.undo)
 
     // Mirrors whether a batch is running elsewhere (e.g. started from Home) so
     // Continue/Retry can be withheld below -- only one batch runs at a time.
@@ -100,7 +101,7 @@ fun DownloadsScreen(
             )
             val result = snackbarHostState.showSnackbar(
                 message = message,
-                actionLabel = context.getString(R.string.undo),
+                actionLabel = undoLabel,
                 duration = SnackbarDuration.Long,
             )
             if (result == SnackbarResult.ActionPerformed) {
