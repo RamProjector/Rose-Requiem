@@ -468,20 +468,22 @@ fun applyOffsetToLyrics(lyrics: String, offset: Int): String {
 }
 
 fun parseLyrics(lyrics: String): List<Pair<String, String>> {
-    val timestampRegex = Regex("""[\[<](\d+):(\d+)\.(\d+)[]>]""")
-    val lines = lyrics.lines()
+    val timestampRegex = Regex("""[\\[<](\\d+):(\\d+)\\.(\\d+)[]>]""")
 
-    return lines.mapNotNull { line ->
-        val match = timestampRegex.find(line) ?: return@mapNotNull null
-        val (minute, second, millisecond) = match.destructured
+    return lyrics.lineSequence().flatMap { line ->
+        val matches = timestampRegex.findAll(line).toList()
+        if (matches.isEmpty()) {
+            return@flatMap emptySequence()
+        }
 
-        val startChar = line[0]
-        val endChar = if (startChar == '[') ']' else '>'
-
-        val timestamp = "${minute}:${second}.${millisecond.padStart(3, '0')}"
-        val text = line.substringAfter(endChar).trim()
-
-        timestamp to text
-    }
+        // Every timestamp in a multi-timestamp LRC line applies to the same lyric text.
+        val text = line.substring(matches.last().range.last + 1).trim()
+        matches.asSequence().map { match ->
+            val (minute, second, fraction) = match.destructured
+            // LRC fractions are commonly hundredths (.23 = 230 ms); pad on the right.
+            val milliseconds = fraction.padEnd(3, '0').take(3)
+            "$minute:$second.$milliseconds" to text
+        }
+    }.toList()
 }
 
