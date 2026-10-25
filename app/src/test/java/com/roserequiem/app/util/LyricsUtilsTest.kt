@@ -31,4 +31,28 @@ class LyricsUtilsTest {
     fun extractYear_doesNotWriteDigitsFromLaterInMalformedDate() {
         assertEquals(null, extractYear("date-2022-06-09"))
     }
+    @Test
+    fun parseLyrics_convertsFractionalSecondsToMilliseconds() {
+        assertEquals(
+            listOf("00:01.230" to "hello", "00:02.500" to "world"),
+            parseLyrics("[00:01.23]hello\n[00:02.5]world")
+        )
+    }
+
+    @Test
+    fun parseLyrics_expandsMultipleTimestampsForTheSameLine() {
+        assertEquals(
+            listOf("00:01.230" to "repeated lyric", "00:02.450" to "repeated lyric"),
+            parseLyrics("[00:01.23][00:02.45]repeated lyric")
+        )
+    }
+
+    @Test
+    fun parseLyrics_supportsAngleBracketTimestampsAndIgnoresUnsyncedLines() {
+        assertEquals(
+            listOf("00:03.700" to "angle lyric"),
+            parseLyrics("[ti:Title]\nunsynced lyric\n<00:03.7>angle lyric")
+        )
+    }
+
 }
