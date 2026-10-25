@@ -115,8 +115,9 @@ fun handleFileNotFoundException(
     }
 
     val fileName = outputFile.name
-    // Reuse an existing sidecar rather than deleting it first. If opening/writing
-    // fails, the previous lyrics file should not be lost just because replacement failed.
+    // Reuse an existing sidecar instead of deleting it before opening the replacement.
+    // A later write failure can still leave a partial file, but an open failure won't
+    // destroy the existing file merely because we deleted it first.
     val targetFile = targetDirectory.findFile(fileName)
         ?: targetDirectory.createFile("text/lrc", fileName)
         ?: error("Unable to create lyrics file on SD card")
