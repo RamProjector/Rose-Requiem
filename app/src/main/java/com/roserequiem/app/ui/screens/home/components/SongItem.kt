@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -56,7 +57,8 @@ fun SongItem(
     isNavigatingItem: Boolean,
 ) {
     val context = LocalContext.current
-    val placeholderImage = remember { context.getDrawable(R.drawable.ic_song)?.asImage() }
+    val resources = LocalResources.current
+    val placeholderImage = remember(resources) { resources.getDrawable(R.drawable.ic_song, null)?.asImage() }
     val painter = rememberAsyncImagePainter(
         ImageRequest.Builder(context).data(data = song.imgUri).apply {
             placeholder(placeholderImage)
