@@ -98,10 +98,11 @@ fun handleFileNotFoundException(
     val markerIndex = cachePath.indexOf(androidDataMarker)
     check(markerIndex >= 0) { "Unable to resolve SD-card storage root" }
     val sdRoot = cachePath.substring(0, markerIndex)
-    val relativeParent = outputFile.absolutePath
-        .substringAfter(sdRoot, missingDelimiterValue = "")
-        .takeIf { it.isNotEmpty() }
-        ?: error("Lyrics output path is outside the selected SD-card storage")
+    val outputPath = outputFile.absolutePath
+    check(outputPath.startsWith("$sdRoot/")) {
+        "Lyrics output path is outside the selected SD-card storage"
+    }
+    val relativeParent = outputPath.removePrefix("$sdRoot/")
     val pathSegments = relativeParent.split("/").dropLast(1).filter { it.isNotEmpty() }
     var targetDirectory = DocumentFile.fromTreeUri(
         context,
@@ -114,12 +115,12 @@ fun handleFileNotFoundException(
     }
 
     val fileName = outputFile.name
-    targetDirectory.findFile(fileName)?.let { existing ->
-        check(existing.delete()) { "Unable to replace existing lyrics file on SD card" }
-    }
-    val targetFile = targetDirectory.createFile("text/lrc", fileName)
+    // Reuse an existing sidecar rather than deleting it first. If opening/writing
+    // fails, the previous lyrics file should not be lost just because replacement failed.
+    val targetFile = targetDirectory.findFile(fileName)
+        ?: targetDirectory.createFile("text/lrc", fileName)
         ?: error("Unable to create lyrics file on SD card")
-    val outputStream = context.contentResolver.openOutputStream(targetFile.uri)
+    val outputStream = context.contentResolver.openOutputStream(targetFile.uri, "wt")
         ?: error("Unable to open lyrics output stream on SD card")
     outputStream.use { it.write(lrc.toByteArray(Charsets.UTF_8)) }
 }
