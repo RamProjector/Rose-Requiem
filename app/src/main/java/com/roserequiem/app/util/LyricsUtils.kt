@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.ParcelFileDescriptor
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
@@ -102,12 +103,22 @@ fun handleFileNotFoundException(
     check(outputPath.startsWith("$sdRoot/")) {
         "Lyrics output path is outside the selected SD-card storage"
     }
-    val relativeParent = outputPath.removePrefix("$sdRoot/")
-    val pathSegments = relativeParent.split("/").dropLast(1).filter { it.isNotEmpty() }
-    var targetDirectory = DocumentFile.fromTreeUri(
-        context,
-        Uri.parse(sdCardPath ?: error("SD-card folder permission is not configured"))
-    ) ?: error("Unable to access the selected SD-card folder")
+    val relativeParent = outputPath.removePrefix("$sdRoot/").split("/")
+        .dropLast(1).filter { it.isNotEmpty() }
+    val treeUri = Uri.parse(sdCardPath ?: error("SD-card folder permission is not configured"))
+    val treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
+    val selectedVolume = treeDocumentId.substringBefore(':')
+    check(selectedVolume == sdRoot.substringAfterLast('/')) {
+        "Selected folder does not belong to the detected SD-card volume"
+    }
+    val selectedFolderSegments = treeDocumentId.substringAfter(':', "")
+        .split("/").filter { it.isNotEmpty() }
+    check(relativeParent.take(selectedFolderSegments.size) == selectedFolderSegments) {
+        "Lyrics output path is outside the selected SD-card folder"
+    }
+    val pathSegments = relativeParent.drop(selectedFolderSegments.size)
+    var targetDirectory = DocumentFile.fromTreeUri(context, treeUri)
+        ?: error("Unable to access the selected SD-card folder")
 
     for (segment in pathSegments) {
         targetDirectory = targetDirectory.findFile(segment)
