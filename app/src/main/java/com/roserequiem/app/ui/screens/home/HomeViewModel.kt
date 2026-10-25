@@ -363,9 +363,17 @@ class HomeViewModel(
         }
         playingSongAlbumArt = try {
             metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)!!.let {
-                // not same name of files because img won't update, cache dir cleared at app start
-                val file = File(context.cacheDir, "${UUID.randomUUID()}.jpg")
-                file.outputStream().use { out -> it.compress(Bitmap.CompressFormat.JPEG, 100, out) }
+                // Unique transient snapshots avoid stale image reuse without invalidating Coil's disk cache.
+                val nowPlayingArtDir = File(context.cacheDir, "now_playing_art")
+                if (!nowPlayingArtDir.exists() && !nowPlayingArtDir.mkdirs()) {
+                    error("Unable to create now-playing artwork cache directory")
+                }
+                val file = File(nowPlayingArtDir, "${UUID.randomUUID()}.jpg")
+                file.outputStream().use { out ->
+                    check(it.compress(Bitmap.CompressFormat.JPEG, 100, out)) {
+                        "Unable to write now-playing artwork snapshot"
+                    }
+                }
                 Uri.parse(file.absolutePath)
             }
         } catch (e: NullPointerException) {
