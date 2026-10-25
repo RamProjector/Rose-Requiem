@@ -1,5 +1,8 @@
 name: Build APK
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -14,35 +17,44 @@ jobs:
     name: Build debug APK
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: write
-      checks: write
-      pull-requests: write
-      statuses: write
-      security-events: write
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.1.0
         with:
           distribution: "zulu"
           java-version: "17"
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Run Android lint
+        run: ./gradlew lintDebug
+
+      - name: Upload Android lint reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-lint-reports
+          path: |
+            app/build/reports/lint-results-debug.html
+            app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
       - name: Upload debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: app-debug.apk
           path: ./app/build/outputs/apk/debug/app-debug.apk
 
   build-release:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     name: Build signed release APK
     runs-on: ubuntu-latest
 
@@ -54,18 +66,13 @@ jobs:
 
     permissions:
       contents: read
-      packages: write
-      checks: write
-      pull-requests: write
-      statuses: write
-      security-events: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.1.0
         with:
           distribution: "zulu"
           java-version: "17"
@@ -79,7 +86,7 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Upload release APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: app-release.apk
           path: ./app/build/outputs/apk/release/app-release.apk

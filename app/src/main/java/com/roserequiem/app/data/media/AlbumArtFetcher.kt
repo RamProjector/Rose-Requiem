@@ -4,6 +4,7 @@ import android.content.ContentUris
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Size
+import androidx.annotation.RequiresApi
 import coil3.Extras
 import coil3.ImageLoader
 import coil3.Uri
@@ -45,6 +46,7 @@ import coil3.request.Options
  * [RoseRequiemApplication][com.roserequiem.app.RoseRequiemApplication]; nothing about the
  * existing memory/disk cache tuning changes.
  */
+@RequiresApi(Build.VERSION_CODES.Q)
 class AlbumArtFetcher(private val options: Options) : Fetcher {
 
     override suspend fun fetch(): FetchResult? {

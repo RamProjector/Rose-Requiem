@@ -22,6 +22,7 @@ import androidx.compose.ui.CombinedModifier
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,7 +47,8 @@ fun SharedTransitionScope.SongCard(
 ) {
     val unknownArtistString = stringResource(R.string.unknown)
     val context = LocalContext.current
-    val placeholderImage = remember { context.getDrawable(R.drawable.ic_song)?.asImage() }
+    val resources = LocalResources.current
+    val placeholderImage = remember(resources) { resources.getDrawable(R.drawable.ic_song, null)?.asImage() }
 
     OutlinedCard(
         shape = RoundedCornerShape(10.dp),

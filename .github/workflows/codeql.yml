@@ -1,0 +1,45 @@
+name: CodeQL
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "23 4 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: read
+
+jobs:
+  analyze:
+    name: Analyze Kotlin and Java
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@452186448a7a7dd9f635cd74bf6a5df3bac6a795 # v4
+        with:
+          languages: java-kotlin
+          build-mode: manual
+
+      - name: Set up JDK
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.1.0
+        with:
+          distribution: zulu
+          java-version: "17"
+
+      - name: Build and compile test sources
+        run: ./gradlew testDebugUnitTest
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@452186448a7a7dd9f635cd74bf6a5df3bac6a795 # v4

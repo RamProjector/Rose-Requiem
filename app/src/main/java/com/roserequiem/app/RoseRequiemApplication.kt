@@ -1,6 +1,7 @@
 package com.roserequiem.app
 
 import android.app.Application
+import android.os.Build
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -45,7 +46,9 @@ class RoseRequiemApplication : Application(), SingletonImageLoader.Factory {
                 // Ordered before the built-in content-URI handling: AlbumArtFetcher tries
                 // a per-song thumbnail first and returns null to defer to Coil's default
                 // handling of the same (untouched) legacy URI when it can't. See its kdoc.
-                add(AlbumArtFetcher.Factory())
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    add(AlbumArtFetcher.Factory())
+                }
                 add(OkHttpNetworkFetcherFactory(callFactory = { okHttpClient }))
             }
             .memoryCache {
