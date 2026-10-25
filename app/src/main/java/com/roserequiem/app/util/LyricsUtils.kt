@@ -468,7 +468,7 @@ fun applyOffsetToLyrics(lyrics: String, offset: Int): String {
 }
 
 fun parseLyrics(lyrics: String): List<Pair<String, String>> {
-    val timestampRegex = Regex("""[\\[<](\\d+):(\\d+)\\.(\\d+)[]>]""")
+    val timestampRegex = Regex("""[\[<](\d+):(\d+)\.(\d+)[]>]""")
 
     return lyrics.lineSequence().flatMap { line ->
         val matches = timestampRegex.findAll(line).toList()
