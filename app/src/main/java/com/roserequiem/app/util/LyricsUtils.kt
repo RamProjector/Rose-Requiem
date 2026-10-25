@@ -442,7 +442,7 @@ fun applyOffsetToLyrics(lyrics: String, offset: Int): String {
     val timestampRegex = Regex("""[\[<](\d+):(\d+)\.(\d+)[]>]""")
 
     fun applyOffset(minute: Int, second: Int, millisecond: Int): String {
-        val totalMilliseconds = (minute * 60 * 1000) + (second * 1000) + (millisecond * 10) + offset
+        val totalMilliseconds = (minute * 60 * 1000) + (second * 1000) + millisecond + offset
         if (totalMilliseconds < 0) return "00:00.000" // Prevent negative times
 
         // LRC minutes are not limited to 0..59; preserve long-track timestamps.
