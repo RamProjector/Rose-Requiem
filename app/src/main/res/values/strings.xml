@@ -181,6 +181,7 @@
     <string name="ignore_embedded_lyrics">Ignore songs with embedded lyrics</string>
     <string name="ignore_embedded_lyrics_description">Skip songs that already have lyrics embedded in their file, only fetching lyrics for songs missing them</string>
     <string name="embedded_lyrics_in_file">Lyrics has been embedded to the song file</string>
+    <string name="embed_lyrics_save_failed">Could not embed lyrics in this audio file. Check file access and try again.</string>
     <string name="embed_non_local_song_error">You tried to embed the lyrics to a non-local file. Aborting operation.</string>
     <string name="multi_person_word_by_word">Multi-person word by word lyrics</string>
     <string name="multi_person_word_by_word_summary2">Use multi-person lyrics format when getting lyrics from supported provider</string>
