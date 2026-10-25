@@ -16,15 +16,15 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ContributorsSection(uriHandler: UriHandler) {
     Column{
-        Contributor.entries.forEach {
-            val additionalInfo = stringResource(id = it.contributionLevel.stringResource)
+        for (contributor in Contributor.entries) {
+            val additionalInfo = stringResource(id = contributor.contributionLevel.stringResource)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { it.github?.let { it1 -> uriHandler.openUri(it1) } }
+                    .clickable { contributor.github?.let(uriHandler::openUri) }
                     .padding(horizontal = 22.dp, vertical = 16.dp)
             ) {
-                Text(text = it.devName)
+                Text(text = contributor.devName)
                 Text(
                     text = additionalInfo,
                     color = MaterialTheme.colorScheme.outline,
