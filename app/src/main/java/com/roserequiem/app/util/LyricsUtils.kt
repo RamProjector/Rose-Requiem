@@ -91,14 +91,19 @@ fun handleFileNotFoundException(
         "SD-card fallback cannot write to primary shared storage"
     }
     val outputFile = file ?: error("Lyrics output file is unavailable")
-    val cacheDirs = context.externalCacheDirs
-    val removableCacheDir = cacheDirs.getOrNull(1)
-        ?: error("No removable SD-card storage is available")
-    val cachePath = removableCacheDir.absolutePath
     val androidDataMarker = "/Android/data"
-    val markerIndex = cachePath.indexOf(androidDataMarker)
-    check(markerIndex >= 0) { "Unable to resolve SD-card storage root" }
-    val sdRoot = cachePath.substring(0, markerIndex)
+    val primaryStorageRoot = Environment.getExternalStorageDirectory().absolutePath
+    val sdRoot = context.externalCacheDirs
+        .asSequence()
+        .mapNotNull { cacheDir ->
+            val cachePath = cacheDir?.absolutePath ?: return@mapNotNull null
+            val markerIndex = cachePath.indexOf(androidDataMarker)
+            if (markerIndex < 0) null else cachePath.substring(0, markerIndex)
+        }
+        .firstOrNull { root ->
+            root != primaryStorageRoot && outputFile.absolutePath.startsWith("$root/")
+        }
+        ?: error("Unable to match lyrics output path to a removable SD-card volume")
     val treeUri = Uri.parse(sdCardPath ?: error("SD-card folder permission is not configured"))
     val treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
     val pathSegments = resolveSdCardRelativePathSegments(
