@@ -94,7 +94,8 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
 
             LaunchedEffect(Unit) {
-                context.cacheDir.deleteRecursively()
+                // Keep Coil's persistent album-art cache; only remove transient playback snapshots.
+                File(context.cacheDir, "now_playing_art").deleteRecursively()
                 if (networkError == null) lyricsProviderService
                     .refreshSpotifyToken()
                     .onFailure { networkError = true }
