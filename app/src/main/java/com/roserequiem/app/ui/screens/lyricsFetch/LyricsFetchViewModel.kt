@@ -136,8 +136,12 @@ class LyricsFetchViewModel(
             )
         }.onFailure { exception ->
             showToast(context, resolveEmbedErrorMessage(context, exception))
-        }.onSuccess {
-            showToast(context, R.string.embedded_lyrics_in_file)
+        }.onSuccess { saved ->
+            if (saved) {
+                showToast(context, R.string.embedded_lyrics_in_file)
+            } else {
+                showToast(context, R.string.embed_lyrics_save_failed)
+            }
         }
     }
 
