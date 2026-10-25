@@ -167,7 +167,7 @@ fun DownloadsScreen(
                     // expanding a big batch janky-to-crashy. Flattened into real lazy
                     // items like this, only whatever's actually scrolled into view is ever
                     // composed, regardless of how large the batch is.
-                    visibleBatches.forEach { filteredBatch ->
+                    for (filteredBatch in visibleBatches) {
                         val batch = filteredBatch.summary
 
                         if (batch.total == 1) {
