@@ -13,7 +13,7 @@ activity-compose = "1.13.0"
 # JankStats: on-device per-frame jank detection with app-supplied state tags, used to
 # get real frame-timing data instead of guessing further from source alone about
 # reported scroll jank that survived every static fix so far.
-metrics-performance = "1.0.0-beta02"
+metrics-performance = "1.0.0"
 # Bumped from 2024.10.00 (the BOM was over a year and a half stale) to pull in every
 # Compose bugfix/perf improvement released since, including a lot of scrolling and
 # recomposition work in LazyColumn/Foundation.
