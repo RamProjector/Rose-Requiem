@@ -55,4 +55,29 @@ class LyricsUtilsTest {
         )
     }
 
+
+    @Test
+    fun applyOffsetToLyrics_normalizesHundredthsAndPreservesMilliseconds() {
+        assertEquals(
+            "[00:02.500]hundredths\n[00:02.734]milliseconds",
+            applyOffsetToLyrics("[00:02.30]hundredths\n[00:02.534]milliseconds", 200)
+        )
+    }
+
+    @Test
+    fun applyOffsetToLyrics_carriesAcrossMinuteBoundaryWithoutWrappingLongTracks() {
+        assertEquals(
+            "[01:00.100]minute boundary\n[60:00.100]long track",
+            applyOffsetToLyrics("[00:59.90]minute boundary\n[59:59.900]long track", 200)
+        )
+    }
+
+    @Test
+    fun applyOffsetToLyrics_clampsNegativeTimestampsToZero() {
+        assertEquals(
+            "[00:00.000]first lyric",
+            applyOffsetToLyrics("[00:00.10]first lyric", -200)
+        )
+    }
+
 }
