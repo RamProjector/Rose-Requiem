@@ -318,6 +318,11 @@ suspend fun downloadLyrics(
                                 }
                             }
                         },
+                        onFailedSave = {
+                            failedCount.incrementAndGet()
+                            flaggedSongs.add(FlaggedSong(song, FlagReason.FAILED))
+                            onSongStatusChanged(song, DownloadStatus.FAILED)
+                        },
                         onLyricsSaved = {
                             successCount.incrementAndGet()
                             onSongStatusChanged(song, DownloadStatus.SUCCESS)
@@ -341,6 +346,7 @@ private suspend fun downloadLyricsForSong(
     onFailedSongInfoResponse: (Throwable) -> Unit,
     onSuccessfulSongInfoResponse: () -> Unit,
     onFailedLyricsResponse: (Throwable) -> Unit,
+    onFailedSave: (Throwable) -> Unit,
     onLyricsSaved: () -> Unit
 ) {
     runCatching {
@@ -366,24 +372,29 @@ private suspend fun downloadLyricsForSong(
                         viewModel.userSettingsController.directlyModifyTimestamps
                     )
 
-                    if (viewModel.userSettingsController.embedLyricsIntoFiles) {
-                        embedLyricsInFile(
-                            context,
-                            song.filePath ?: throw NullPointerException("File path is null"),
-                            lrcContent,
-                            year = songInfo.year,
-                        )
-                    } else {
-                        writeLyricsToFile(
-                            song.filePath.toLrcFile(),
-                            lrcContent,
-                            context,
-                            song,
-                            viewModel.userSettingsController.sdCardPath
-                        )
-                    }
-
-                    onLyricsSaved()
+                    runCatching {
+                        if (viewModel.userSettingsController.embedLyricsIntoFiles) {
+                            check(
+                                embedLyricsInFile(
+                                    context,
+                                    song.filePath ?: error("Audio file path is unavailable"),
+                                    lrcContent,
+                                    year = songInfo.year,
+                                )
+                            ) { "Failed to embed lyrics into audio file" }
+                        } else {
+                            val lyricsFile = song.filePath.toLrcFile()
+                                ?: error("Lyrics output path is unavailable")
+                            writeLyricsToFile(
+                                lyricsFile,
+                                lrcContent,
+                                context,
+                                song,
+                                viewModel.userSettingsController.sdCardPath
+                            )
+                        }
+                    }.onFailure(onFailedSave)
+                        .onSuccess { onLyricsSaved() }
                 }
         }
 }
