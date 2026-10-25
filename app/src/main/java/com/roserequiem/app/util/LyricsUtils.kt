@@ -445,9 +445,10 @@ fun applyOffsetToLyrics(lyrics: String, offset: Int): String {
         val totalMilliseconds = (minute * 60 * 1000) + (second * 1000) + (millisecond * 10) + offset
         if (totalMilliseconds < 0) return "00:00.000" // Prevent negative times
 
-        val newMinutes = (totalMilliseconds / 60000) % 60
+        // LRC minutes are not limited to 0..59; preserve long-track timestamps.
+        val newMinutes = totalMilliseconds / 60000
         val newSeconds = (totalMilliseconds / 1000) % 60
-        val newMilliseconds = (totalMilliseconds % 1000)
+        val newMilliseconds = totalMilliseconds % 1000
 
         return "${newMinutes.toString().padStart(2, '0')}:" +
                 "${newSeconds.toString().padStart(2, '0')}." +
@@ -458,7 +459,9 @@ fun applyOffsetToLyrics(lyrics: String, offset: Int): String {
         val (minuteStr, secondStr, millisecondStr) = matchResult.destructured
         val minute = minuteStr.toInt()
         val second = secondStr.toInt()
-        val millisecond = millisecondStr.toInt()
+        // LRC commonly uses hundredths (.23) but some files use milliseconds (.234).
+        // Normalize both forms before adding the millisecond offset.
+        val millisecond = millisecondStr.padEnd(3, '0').take(3).toInt()
 
         val startChar = matchResult.value[0]
         val endChar = if (startChar == '[') ']' else '>'
