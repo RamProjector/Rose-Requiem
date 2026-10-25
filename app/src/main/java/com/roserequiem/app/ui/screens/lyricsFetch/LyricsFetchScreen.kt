@@ -67,6 +67,8 @@ fun SharedTransitionScope.LyricsFetchScreen(
 
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
+    val generatedUsing = stringResource(R.string.generated_using)
+    val lyricsCopiedToClipboard = stringResource(R.string.lyrics_copied_to_clipboard)
     val clipboardManager = LocalClipboardManager.current
 
     var expandedProviders by remember { mutableStateOf(false) }
@@ -193,7 +195,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                                 queryState.song,
                                 viewModel.source?.filePath?.replace(".nowplaying", ""),
                                 context,
-                                context.getString(R.string.generated_using)
+                                generatedUsing
                             )
                         },
                         onEmbedLyrics = {
@@ -209,7 +211,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
 
                             showToast(
                                 context,
-                                context.getString(R.string.lyrics_copied_to_clipboard),
+                                lyricsCopiedToClipboard,
                             )
                         },
                         onLanguageSelected = { songId, language ->
