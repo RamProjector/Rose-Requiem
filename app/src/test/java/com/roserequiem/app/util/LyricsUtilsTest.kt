@@ -80,4 +80,55 @@ class LyricsUtilsTest {
         )
     }
 
+    @Test
+    fun resolveSdCardRelativePathSegments_supportsSelectingCardRoot() {
+        assertEquals(
+            listOf("Music", "Albums"),
+            resolveSdCardRelativePathSegments(
+                sdRoot = "/storage/ABCD-1234",
+                outputPath = "/storage/ABCD-1234/Music/Albums/song.lrc",
+                treeDocumentId = "ABCD-1234:"
+            )
+        )
+    }
+
+    @Test
+    fun resolveSdCardRelativePathSegments_supportsSelectingNestedFolder() {
+        assertEquals(
+            listOf("Albums"),
+            resolveSdCardRelativePathSegments(
+                sdRoot = "/storage/ABCD-1234",
+                outputPath = "/storage/ABCD-1234/Music/Albums/song.lrc",
+                treeDocumentId = "ABCD-1234:Music"
+            )
+        )
+    }
+
+    @Test(expected = IllegalStateException::class)
+    fun resolveSdCardRelativePathSegments_rejectsOutputOutsideSelectedFolder() {
+        resolveSdCardRelativePathSegments(
+            sdRoot = "/storage/ABCD-1234",
+            outputPath = "/storage/ABCD-1234/Music/Albums/song.lrc",
+            treeDocumentId = "ABCD-1234:Podcasts"
+        )
+    }
+
+    @Test(expected = IllegalStateException::class)
+    fun resolveSdCardRelativePathSegments_rejectsDifferentVolume() {
+        resolveSdCardRelativePathSegments(
+            sdRoot = "/storage/ABCD-1234",
+            outputPath = "/storage/ABCD-1234/Music/song.lrc",
+            treeDocumentId = "EFGH-5678:"
+        )
+    }
+
+    @Test(expected = IllegalStateException::class)
+    fun resolveSdCardRelativePathSegments_rejectsPathOutsideStorageRoot() {
+        resolveSdCardRelativePathSegments(
+            sdRoot = "/storage/ABCD-1234",
+            outputPath = "/storage/emulated/0/Music/song.lrc",
+            treeDocumentId = "ABCD-1234:"
+        )
+    }
+
 }

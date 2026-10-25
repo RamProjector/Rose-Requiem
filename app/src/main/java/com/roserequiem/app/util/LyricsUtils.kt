@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.ParcelFileDescriptor
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
@@ -66,10 +67,11 @@ fun writeLyricsToFile(
     song: Song,
     sdCardPath: String?
 ) {
+    val outputFile = file ?: error("Lyrics output file is unavailable")
     try {
-        file?.writeText(lrcContent)
+        outputFile.writeText(lrcContent)
     } catch (e: FileNotFoundException) {
-        handleFileNotFoundException(context, song, file, lrcContent, sdCardPath)
+        handleFileNotFoundException(context, song, outputFile, lrcContent, sdCardPath)
     }
 }
 
@@ -80,34 +82,53 @@ fun handleFileNotFoundException(
     lrc: String,
     sdCardPath: String?
 ) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R && !song.filePath!!.contains("/storage/emulated/0")) {
-        val sd = context.externalCacheDirs[1].absolutePath.substring(
-            0,
-            context.externalCacheDirs[1].absolutePath.indexOf("/Android/data")
-        )
-        val path = file?.absolutePath?.substringAfter(sd)?.split("/")?.dropLast(1)
-        var sdCardFiles = DocumentFile.fromTreeUri(context, Uri.parse(sdCardPath))
-        for (element in path!!) {
-            for (sdCardFile in sdCardFiles!!.listFiles()) {
-                if (sdCardFile.name == element) {
-                    sdCardFiles = sdCardFile
-                }
-            }
-        }
-        sdCardFiles?.listFiles()?.forEach {
-            if (it.name == file.name) {
-                it.delete()
-                return@forEach
-            }
-        }
-        sdCardFiles?.createFile("text/lrc", file.name)?.let {
-            val outputStream = context.contentResolver.openOutputStream(it.uri)
-            outputStream?.write(lrc.toByteArray())
-            outputStream?.close()
-        }
-    } else {
-        error("Unable to handle FileNotFoundException")
+    check(Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+        "SD-card fallback is only supported before Android 11"
     }
+    val songPath = song.filePath
+        ?: error("Audio file path is unavailable for SD-card fallback")
+    check(!songPath.startsWith("/storage/emulated/0/")) {
+        "SD-card fallback cannot write to primary shared storage"
+    }
+    val outputFile = file ?: error("Lyrics output file is unavailable")
+    val androidDataMarker = "/Android/data"
+    val primaryStorageRoot = Environment.getExternalStorageDirectory().absolutePath
+    val sdRoot = context.externalCacheDirs
+        .asSequence()
+        .mapNotNull { cacheDir ->
+            val cachePath = cacheDir?.absolutePath ?: return@mapNotNull null
+            val markerIndex = cachePath.indexOf(androidDataMarker)
+            if (markerIndex < 0) null else cachePath.substring(0, markerIndex)
+        }
+        .firstOrNull { root ->
+            root != primaryStorageRoot && outputFile.absolutePath.startsWith("$root/")
+        }
+        ?: error("Unable to match lyrics output path to a removable SD-card volume")
+    val treeUri = Uri.parse(sdCardPath ?: error("SD-card folder permission is not configured"))
+    val treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
+    val pathSegments = resolveSdCardRelativePathSegments(
+        sdRoot = sdRoot,
+        outputPath = outputFile.absolutePath,
+        treeDocumentId = treeDocumentId
+    )
+    var targetDirectory = DocumentFile.fromTreeUri(context, treeUri)
+        ?: error("Unable to access the selected SD-card folder")
+
+    for (segment in pathSegments) {
+        targetDirectory = targetDirectory.findFile(segment)
+            ?: error("SD-card folder does not contain expected directory: $segment")
+    }
+
+    val fileName = outputFile.name
+    // Reuse an existing sidecar instead of deleting it before opening the replacement.
+    // A later write failure can still leave a partial file, but an open failure won't
+    // destroy the existing file merely because we deleted it first.
+    val targetFile = targetDirectory.findFile(fileName)
+        ?: targetDirectory.createFile("text/lrc", fileName)
+        ?: error("Unable to create lyrics file on SD card")
+    val outputStream = context.contentResolver.openOutputStream(targetFile.uri, "wt")
+        ?: error("Unable to open lyrics output stream on SD card")
+    outputStream.use { it.write(lrc.toByteArray(Charsets.UTF_8)) }
 }
 
 @SuppressLint("Range")
@@ -501,3 +522,26 @@ fun parseLyrics(lyrics: String): List<Pair<String, String>> {
     }.toList()
 }
 
+
+
+internal fun resolveSdCardRelativePathSegments(
+    sdRoot: String,
+    outputPath: String,
+    treeDocumentId: String
+): List<String> {
+    check(outputPath.startsWith("$sdRoot/")) {
+        "Lyrics output path is outside the detected SD-card storage"
+    }
+    val selectedVolume = treeDocumentId.substringBefore(':')
+    check(selectedVolume == sdRoot.substringAfterLast('/')) {
+        "Selected folder does not belong to the detected SD-card volume"
+    }
+    val relativeParent = outputPath.removePrefix("$sdRoot/").split("/")
+        .dropLast(1).filter { it.isNotEmpty() }
+    val selectedFolderSegments = treeDocumentId.substringAfter(':', "")
+        .split("/").filter { it.isNotEmpty() }
+    check(relativeParent.take(selectedFolderSegments.size) == selectedFolderSegments) {
+        "Lyrics output path is outside the selected SD-card folder"
+    }
+    return relativeParent.drop(selectedFolderSegments.size)
+}

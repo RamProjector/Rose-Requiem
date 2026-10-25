@@ -1,5 +1,6 @@
 package com.roserequiem.app.ui.screens.settings.components
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -16,6 +17,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,6 +31,7 @@ import com.roserequiem.app.R
 
 @Composable
 fun SdCardPathSetting(sdPath: String?, onClearPath: () -> Unit, onUpdatePath: (String) -> Unit) {
+    val context = LocalContext.current
     var picker by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier.padding(horizontal = 22.dp, vertical = 16.dp)
@@ -56,8 +59,21 @@ fun SdCardPathSetting(sdPath: String?, onClearPath: () -> Unit, onUpdatePath: (S
 
         if (picker) {
             val sdCardPicker =
-                rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
-                    it?.let { uri -> onUpdatePath(uri.toString()) }
+                rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+                    uri?.let {
+                        // Keep SAF access after process death and device reboot. The saved URI
+                        // is reused by the legacy SD-card lyrics writer, so a temporary grant
+                        // would leave a configured path that no longer has write permission.
+                        runCatching {
+                            context.contentResolver.takePersistableUriPermission(
+                                it,
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            )
+                        }.onSuccess {
+                            onUpdatePath(uri.toString())
+                        }
+                    }
                     picker = false
                 }
             LaunchedEffect(Unit) {
