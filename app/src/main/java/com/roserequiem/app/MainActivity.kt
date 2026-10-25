@@ -170,7 +170,9 @@ class MainActivity : ComponentActivity() {
 private fun MainActivity.CheckForPermissions(
     userSettingsController: UserSettingsController
 ) {
-    if (usesAllFilesAccessPermission(Build.VERSION.SDK_INT)) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+        usesAllFilesAccessPermission(Build.VERSION.SDK_INT)
+    ) {
         if (!Environment.isExternalStorageManager()) {
             userSettingsController.updatePassedInit(false)
         }
