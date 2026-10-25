@@ -443,24 +443,47 @@ fun saveToExternalPath(
     fileName: String,
     newLyricsFilePath: String?
 ) {
-    val sd = context.externalCacheDirs[1].absolutePath.substringBefore("/Android/data")
-    val path = sourceFilePath
-        ?.toLrcFile()
-        ?.absolutePath
-        ?.substringAfter(sd)
-        ?.split("/")
-        ?.dropLast(1)
-        ?: error("path was null when trying to save to sd card")
-    var sdCardFiles = DocumentFile.fromTreeUri(context, Uri.parse(newLyricsFilePath))
-    path.forEach { element ->
-        sdCardFiles = sdCardFiles?.listFiles()?.firstOrNull { it.name == element }
+    check(Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+        "Legacy SD-card save is only supported before Android 11"
     }
-    sdCardFiles?.listFiles()?.firstOrNull { it.name == fileName }?.delete()
-    sdCardFiles?.createFile("text/lrc", fileName)?.let {
-        context.contentResolver.openOutputStream(it.uri)?.use { outputStream ->
-            outputStream.write(lrc.toByteArray())
+    val sourcePath = sourceFilePath
+        ?: error("Audio file path is unavailable when saving lyrics to SD card")
+    val outputFile = sourcePath.toLrcFile()
+        ?: error("Lyrics output path is unavailable when saving to SD card")
+    val primaryStorageRoot = Environment.getExternalStorageDirectory().absolutePath
+    val sdRoot = context.externalCacheDirs
+        .asSequence()
+        .mapNotNull { cacheDir ->
+            val cachePath = cacheDir?.absolutePath ?: return@mapNotNull null
+            val markerIndex = cachePath.indexOf("/Android/data")
+            if (markerIndex < 0) null else cachePath.substring(0, markerIndex)
         }
+        .firstOrNull { root ->
+            root != primaryStorageRoot && outputFile.absolutePath.startsWith("$root/")
+        }
+        ?: error("Unable to match lyrics output path to a removable SD-card volume")
+    val treeUri = Uri.parse(
+        newLyricsFilePath ?: error("SD-card folder permission is not configured")
+    )
+    val pathSegments = resolveSdCardRelativePathSegments(
+        sdRoot = sdRoot,
+        outputPath = outputFile.absolutePath,
+        treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
+    )
+    var targetDirectory = DocumentFile.fromTreeUri(context, treeUri)
+        ?: error("Unable to access the selected SD-card folder")
+
+    for (segment in pathSegments) {
+        targetDirectory = targetDirectory.findFile(segment)
+            ?: error("SD-card folder does not contain expected directory: $segment")
     }
+
+    val targetFile = targetDirectory.findFile(fileName)
+        ?: targetDirectory.createFile("text/lrc", fileName)
+        ?: error("Unable to create lyrics file on SD card")
+    val outputStream = context.contentResolver.openOutputStream(targetFile.uri, "wt")
+        ?: error("Unable to open lyrics output stream on SD card")
+    outputStream.use { it.write(lrc.toByteArray(Charsets.UTF_8)) }
 }
 
 /**
