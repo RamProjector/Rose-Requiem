@@ -61,8 +61,7 @@ fun Modifier.repeatingClickable(
     minDelayMillis: Long = 5,
     delayDecayFactor: Float = .20f,
     onClick: () -> Unit
-): Modifier = this.then(
-    composed {
+): Modifier = composed {
         val currentClickListener by rememberUpdatedState(onClick)
         val scope = rememberCoroutineScope()
 
@@ -98,4 +97,3 @@ fun Modifier.repeatingClickable(
             }
         }
     }
-)
