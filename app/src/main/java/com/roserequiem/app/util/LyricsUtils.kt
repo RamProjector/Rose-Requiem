@@ -99,24 +99,13 @@ fun handleFileNotFoundException(
     val markerIndex = cachePath.indexOf(androidDataMarker)
     check(markerIndex >= 0) { "Unable to resolve SD-card storage root" }
     val sdRoot = cachePath.substring(0, markerIndex)
-    val outputPath = outputFile.absolutePath
-    check(outputPath.startsWith("$sdRoot/")) {
-        "Lyrics output path is outside the selected SD-card storage"
-    }
-    val relativeParent = outputPath.removePrefix("$sdRoot/").split("/")
-        .dropLast(1).filter { it.isNotEmpty() }
     val treeUri = Uri.parse(sdCardPath ?: error("SD-card folder permission is not configured"))
     val treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
-    val selectedVolume = treeDocumentId.substringBefore(':')
-    check(selectedVolume == sdRoot.substringAfterLast('/')) {
-        "Selected folder does not belong to the detected SD-card volume"
-    }
-    val selectedFolderSegments = treeDocumentId.substringAfter(':', "")
-        .split("/").filter { it.isNotEmpty() }
-    check(relativeParent.take(selectedFolderSegments.size) == selectedFolderSegments) {
-        "Lyrics output path is outside the selected SD-card folder"
-    }
-    val pathSegments = relativeParent.drop(selectedFolderSegments.size)
+    val pathSegments = resolveSdCardRelativePathSegments(
+        sdRoot = sdRoot,
+        outputPath = outputFile.absolutePath,
+        treeDocumentId = treeDocumentId
+    )
     var targetDirectory = DocumentFile.fromTreeUri(context, treeUri)
         ?: error("Unable to access the selected SD-card folder")
 
@@ -528,3 +517,26 @@ fun parseLyrics(lyrics: String): List<Pair<String, String>> {
     }.toList()
 }
 
+
+
+internal fun resolveSdCardRelativePathSegments(
+    sdRoot: String,
+    outputPath: String,
+    treeDocumentId: String
+): List<String> {
+    check(outputPath.startsWith("$sdRoot/")) {
+        "Lyrics output path is outside the detected SD-card storage"
+    }
+    val selectedVolume = treeDocumentId.substringBefore(':')
+    check(selectedVolume == sdRoot.substringAfterLast('/')) {
+        "Selected folder does not belong to the detected SD-card volume"
+    }
+    val relativeParent = outputPath.removePrefix("$sdRoot/").split("/")
+        .dropLast(1).filter { it.isNotEmpty() }
+    val selectedFolderSegments = treeDocumentId.substringAfter(':', "")
+        .split("/").filter { it.isNotEmpty() }
+    check(relativeParent.take(selectedFolderSegments.size) == selectedFolderSegments) {
+        "Lyrics output path is outside the selected SD-card folder"
+    }
+    return relativeParent.drop(selectedFolderSegments.size)
+}
