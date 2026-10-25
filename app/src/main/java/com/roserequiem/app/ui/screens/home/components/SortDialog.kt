@@ -74,23 +74,23 @@ fun SortOrderRadioGroup(
     onSortOrderChange: (SortOrders) -> Unit
 ) {
     Column {
-        SortOrders.entries.forEach {
+        for (sortOrder in SortOrders.entries) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(
-                        onClick = { onSortOrderChange(it) }
+                        onClick = { onSortOrderChange(sortOrder) }
                     )
                     .padding(horizontal = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 RadioButton(
-                    selected = userSettingsController.sortOrder == it,
+                    selected = userSettingsController.sortOrder == sortOrder,
                     onClick = {
                         onSortOrderChange(it)
                     }
                 )
-                Text(stringResource(it.displayName))
+                Text(stringResource(sortOrder.displayName))
             }
         }
     }
@@ -102,21 +102,21 @@ fun SortByRadioGroup(
     onSortByChange: (SortValues) -> Unit
 ) {
     Column {
-        SortValues.entries.forEach {
+        for (sortValue in SortValues.entries) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = { onSortByChange(it) })
+                    .clickable(onClick = { onSortByChange(sortValue) })
                     .padding(horizontal = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 RadioButton(
-                    selected = userSettingsController.sortBy == it,
+                    selected = userSettingsController.sortBy == sortValue,
                     onClick = {
                         onSortByChange(it)
                     }
                 )
-                Text(stringResource(it.displayName))
+                Text(stringResource(sortValue.displayName))
             }
         }
     }
