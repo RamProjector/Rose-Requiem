@@ -42,14 +42,11 @@ private val RECORDS_KEY = stringPreferencesKey("records_json")
  */
 object DownloadHistoryRepository {
     /**
-     * Oldest records are dropped once a batch pushes the history past this many entries.
-     * Public so [com.roserequiem.app.services.BatchDownloadService] can size its chunks
-     * relative to this cap instead of duplicating the number -- a single huge batch
-     * calling [markQueued] with more than this many songs at once will silently lose
-     * the overflow (they still download, they just never become visible/trackable
-     * history), so batches need to stay well under it.
+     * Retained per-song history ceiling. This is not a download-run limit: the service
+     * processes large requests in bounded chunks independently. The Downloads screen
+     * groups all chunks from one run into one logical batch row.
      */
-    const val MAX_RECORDS = 500
+    const val MAX_RECORDS = 5_000
     private val json = Json { ignoreUnknownKeys = true }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     // Guards init() itself against running twice -- flips true the instant init() is
