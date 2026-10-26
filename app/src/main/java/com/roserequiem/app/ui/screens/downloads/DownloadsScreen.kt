@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -64,6 +65,8 @@ fun DownloadsScreen(
     val records by viewModel.records.collectAsState()
     val isLoaded by viewModel.isLoaded.collectAsState()
     TrackJankState("screen", "downloads")
+    val listState = rememberLazyListState()
+    TrackJankState("downloads_scrolling", listState.isScrollInProgress.toString())
     // Both backed by SavedStateHandle (see DownloadsViewModel) so they survive the app's
     // process being killed and restored, not just configuration changes.
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -165,7 +168,7 @@ fun DownloadsScreen(
                 !isLoaded -> LoadingState()
                 records.isEmpty() -> EmptyState(textRes = R.string.no_download_history)
                 visibleBatches.isEmpty() -> EmptyState(textRes = R.string.no_download_history_match)
-                else -> LazyColumn {
+                else -> LazyColumn(state = listState) {
                     // Every batch's rows are emitted as their own lazy items -- including
                     // an expanded batch's children -- rather than composed eagerly inside
                     // a plain Column nested in one outer item. A batch can be a "download
