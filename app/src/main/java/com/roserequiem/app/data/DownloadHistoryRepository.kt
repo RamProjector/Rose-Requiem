@@ -157,6 +157,7 @@ object DownloadHistoryRepository {
                     status = DownloadStatus.QUEUED,
                     timestamp = now,
                     batchId = batchId,
+                    batchStartedAt = now,
                 )
             }
             byPath.values.let(::trimToCap)
