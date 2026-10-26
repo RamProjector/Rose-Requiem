@@ -84,17 +84,17 @@ class HomeViewModel(
 
     // Filter settings
     private var cachedFolders: MutableList<String>? = null
-    private var hideFolders = userSettingsController.blacklistedFolders.isNotEmpty()
+    private var hideFolders = userSettingsController.blacklistedFolders.any { it.isNotBlank() }
 
     // Filter activity is separate from the result list: an active filter can legitimately
     // produce zero matches, while an empty result list with no active filters means "show all".
     private var _cachedFilteredSongs = MutableStateFlow<List<Song>>(emptyList())
     private val _filtersActive = MutableStateFlow(
-        userSettingsController.hideLyrics || userSettingsController.blacklistedFolders.isNotEmpty()
+        userSettingsController.hideLyrics || userSettingsController.blacklistedFolders.any { it.isNotBlank() }
     )
 
     private fun hasActiveFilters(): Boolean =
-        userSettingsController.hideLyrics || userSettingsController.blacklistedFolders.isNotEmpty()
+        userSettingsController.hideLyrics || userSettingsController.blacklistedFolders.any { it.isNotBlank() }
 
     private fun currentFilterSource(): List<Song> =
         if (hasActiveFilters()) _cachedFilteredSongs.value else cachedSongs.orEmpty()
@@ -131,7 +131,11 @@ class HomeViewModel(
             .filterNotNull()
             // simple .combine wasn't enough apparently, so im using this
             .flatMapLatest { all ->
-                combine(_cachedFilteredSongs, _searchResults, _filtersActive) { filtered, searchResults, filtersActive ->
+                combine(
+                    _cachedFilteredSongs,
+                    _searchResults,
+                    _filtersActive,
+                ) { filtered, searchResults, filtersActive ->
                     resolveHomeDisplaySongs(
                         allSongs = all,
                         filteredSongs = filtered,
@@ -280,7 +284,7 @@ class HomeViewModel(
      * @return A list of songs depending on the user's preferences. If no preferences are set, null is returned, so app will use all songs.
      */
     fun filterSongs() = viewModelScope.launch(Dispatchers.IO) {
-        hideFolders = userSettingsController.blacklistedFolders.isNotEmpty()
+        hideFolders = userSettingsController.blacklistedFolders.any { it.isNotBlank() }
 
         when {
             userSettingsController.hideLyrics && hideFolders -> {
