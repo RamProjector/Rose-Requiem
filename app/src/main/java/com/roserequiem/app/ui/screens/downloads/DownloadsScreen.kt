@@ -85,7 +85,11 @@ fun DownloadsScreen(
     // bar over, same as the Home screen's song list.
     val selectedCount = viewModel.selectedFilePaths.size
     val selectionMode = selectedCount > 0
-    val availableActions = remember(records, selectedCount, batchActive) {
+    // Action availability depends on *which* records are selected, not only how many.
+    // Switching between two rows with the same selection count must refresh the toolbar
+    // (e.g. FAILED offers Retry while PAUSED offers Continue).
+    val selectedFilePaths = viewModel.selectedFilePaths.keys.toSet()
+    val availableActions = remember(records, selectedFilePaths, batchActive) {
         viewModel.availableActions(records, batchActive)
     }
 
