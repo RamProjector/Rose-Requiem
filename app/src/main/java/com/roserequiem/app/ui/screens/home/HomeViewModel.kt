@@ -135,12 +135,13 @@ class HomeViewModel(
                     _cachedFilteredSongs,
                     _searchResults,
                     _filtersActive,
-                ) { filtered, searchResults, filtersActive ->
+                    snapshotFlow { searchQuery },
+                ) { filtered, searchResults, filtersActive, query ->
                     resolveHomeDisplaySongs(
                         allSongs = all,
                         filteredSongs = filtered,
                         searchResults = searchResults,
-                        searchActive = searchQuery.isNotEmpty(),
+                        searchActive = query.isNotEmpty(),
                         filtersActive = filtersActive,
                     )
                 }
