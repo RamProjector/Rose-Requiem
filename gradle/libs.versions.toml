@@ -23,7 +23,7 @@ metrics-performance = "1.0.0-beta02"
 # when the BOM is bumped, which leaves you running a mismatched Compose graph --
 # newer ui/foundation modules paired with a material3 build from a year and a half
 # earlier. Let the BOM be the single source of truth for all of them.
-compose-bom = "2026.05.00"
+compose-bom = "2026.09.00"
 navigation-compose = "2.8.3"
 navigation-runtime-ktx = "2.8.3"
 preference = "1.2.1"
