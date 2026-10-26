@@ -40,6 +40,23 @@ import com.roserequiem.app.util.ext.toLrcFile
 import java.io.File
 import java.util.UUID
 
+
+/**
+ * Resolves the visible Home source without using list emptiness as a proxy for whether
+ * filters are active. An empty filtered list is a valid result and must stay empty.
+ */
+internal fun resolveHomeDisplaySongs(
+    allSongs: List<Song>,
+    filteredSongs: List<Song>,
+    searchResults: List<Song>,
+    searchActive: Boolean,
+    filtersActive: Boolean,
+): List<Song> = when {
+    searchActive -> searchResults
+    filtersActive -> filteredSongs
+    else -> allSongs
+}
+
 /**
  * ViewModel class for the main functionality of the app.
  */
@@ -67,10 +84,20 @@ class HomeViewModel(
 
     // Filter settings
     private var cachedFolders: MutableList<String>? = null
-    private var hideFolders = userSettingsController.blacklistedFolders.isNotEmpty()
+    private var hideFolders = userSettingsController.blacklistedFolders.any { it.isNotBlank() }
 
-    // filtered folders/lyrics songs
+    // Filter activity is separate from the result list: an active filter can legitimately
+    // produce zero matches, while an empty result list with no active filters means "show all".
     private var _cachedFilteredSongs = MutableStateFlow<List<Song>>(emptyList())
+    private val _filtersActive = MutableStateFlow(
+        userSettingsController.hideLyrics || userSettingsController.blacklistedFolders.any { it.isNotBlank() }
+    )
+
+    private fun hasActiveFilters(): Boolean =
+        userSettingsController.hideLyrics || userSettingsController.blacklistedFolders.any { it.isNotBlank() }
+
+    private fun currentFilterSource(): List<Song> =
+        if (hasActiveFilters()) _cachedFilteredSongs.value else cachedSongs.orEmpty()
 
     // searching
     private var _searchResults = MutableStateFlow<List<Song>>(emptyList())
@@ -79,8 +106,8 @@ class HomeViewModel(
     var displaySongs by mutableStateOf(
         when {
             searchQuery.isNotEmpty() -> _searchResults.value
-            _cachedFilteredSongs.value.isNotEmpty() -> _cachedFilteredSongs.value
-            else -> allSongs ?: listOf()
+            _filtersActive.value -> _cachedFilteredSongs.value
+            else -> allSongs.orEmpty()
         }
     )
 
@@ -104,12 +131,19 @@ class HomeViewModel(
             .filterNotNull()
             // simple .combine wasn't enough apparently, so im using this
             .flatMapLatest { all ->
-                _cachedFilteredSongs.combine(_searchResults) { filtered, searchResults ->
-                    when {
-                        searchQuery.isNotEmpty() -> searchResults
-                        filtered.isNotEmpty() -> filtered
-                        else -> all
-                    }
+                combine(
+                    _cachedFilteredSongs,
+                    _searchResults,
+                    _filtersActive,
+                    snapshotFlow { searchQuery },
+                ) { filtered, searchResults, filtersActive, query ->
+                    resolveHomeDisplaySongs(
+                        allSongs = all,
+                        filteredSongs = filtered,
+                        searchResults = searchResults,
+                        searchActive = query.isNotEmpty(),
+                        filtersActive = filtersActive,
+                    )
                 }
             }.collect { newDisplaySongs ->
                 displaySongs = newDisplaySongs
@@ -200,7 +234,7 @@ class HomeViewModel(
         if (query.isEmpty()) {
             // Clearing the search should feel instant - no debounce.
             searchJob = viewModelScope.launch(Dispatchers.IO) {
-                _searchResults.value = _cachedFilteredSongs.value
+                _searchResults.value = currentFilterSource()
             }
             return
         }
@@ -211,11 +245,8 @@ class HomeViewModel(
             // keystroke will have already cancelled this job by the time
             // delay() returns.
 
-            val data: List<Song> = when {
-                _cachedFilteredSongs.value.isNotEmpty() -> _cachedFilteredSongs.value
-                cachedSongs != null -> cachedSongs!!
-                else -> return@launch
-            }
+            val data = currentFilterSource()
+            if (cachedSongs == null) return@launch
 
             val results = data.filter {
                 it.title?.contains(query, ignoreCase = true) == true ||
@@ -254,7 +285,7 @@ class HomeViewModel(
      * @return A list of songs depending on the user's preferences. If no preferences are set, null is returned, so app will use all songs.
      */
     fun filterSongs() = viewModelScope.launch(Dispatchers.IO) {
-        hideFolders = userSettingsController.blacklistedFolders.isNotEmpty()
+        hideFolders = userSettingsController.blacklistedFolders.any { it.isNotBlank() }
 
         when {
             userSettingsController.hideLyrics && hideFolders -> {
@@ -287,6 +318,15 @@ class HomeViewModel(
             else -> {
                 _cachedFilteredSongs.value = emptyList()
             }
+        }
+
+        // Update the active-state independently from the result list so the transition
+        // from "show all" to "zero matches" is observable even when both lists are empty.
+        _filtersActive.value = hasActiveFilters()
+        if (searchQuery.isNotEmpty()) {
+            updateSearchResults(searchQuery)
+        } else {
+            _searchResults.value = currentFilterSource()
         }
     }
 
