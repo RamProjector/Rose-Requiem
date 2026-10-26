@@ -178,8 +178,8 @@ fun LoadingScreen() {
     ExperimentalSharedTransitionApi::class,
     ExperimentalMaterial3Api::class,
     ExperimentalFoundationApi::class,
-    UnstableApi::class,
 )
+@UnstableApi
 @Composable
 fun HomeScreenLoaded(
     selected: SnapshotStateMap<String, Unit>,
