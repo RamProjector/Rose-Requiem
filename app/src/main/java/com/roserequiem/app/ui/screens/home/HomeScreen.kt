@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import com.roserequiem.app.R
 import com.roserequiem.app.domain.model.Song
@@ -177,6 +178,7 @@ fun LoadingScreen() {
     ExperimentalSharedTransitionApi::class,
     ExperimentalMaterial3Api::class,
     ExperimentalFoundationApi::class,
+    UnstableApi::class,
 )
 @Composable
 fun HomeScreenLoaded(
