@@ -21,9 +21,11 @@ import java.io.File
 object LocalPlaybackController {
     private var controller: MediaController? = null
     private var controllerFuture: ListenableFuture<MediaController>? = null
+    private var requestGeneration: Long = 0L
 
     @Synchronized
     fun playQueue(context: Context, songs: List<Song>, selectedSong: Song) {
+        val requestId = ++requestGeneration
         val queue = songs.mapNotNull { song ->
             val path = song.filePath?.takeIf(String::isNotBlank) ?: return@mapNotNull null
             val file = File(path)
@@ -62,13 +64,20 @@ object LocalPlaybackController {
         future.addListener(
             {
                 runCatching { future.get() }.onSuccess { connected ->
-                    synchronized(this) {
-                        controller = connected
-                        controllerFuture = null
+                    val isLatestRequest = synchronized(this) {
+                        if (requestId != requestGeneration) {
+                            false
+                        } else {
+                            controller = connected
+                            controllerFuture = null
+                            true
+                        }
                     }
-                    startQueue(connected, queue, selectedIndex)
+                    if (isLatestRequest) startQueue(connected, queue, selectedIndex)
                 }.onFailure {
-                    synchronized(this) { controllerFuture = null }
+                    synchronized(this) {
+                        if (requestId == requestGeneration) controllerFuture = null
+                    }
                 }
             },
             ContextCompat.getMainExecutor(appContext)
