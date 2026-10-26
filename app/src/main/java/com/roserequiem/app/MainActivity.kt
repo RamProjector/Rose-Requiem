@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.ViewCompat
 import androidx.metrics.performance.JankStats
 import androidx.navigation.compose.rememberNavController
+import androidx.media3.common.util.UnstableApi
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.roserequiem.app.data.UserSettingsController
@@ -58,6 +59,7 @@ class MainActivity : ComponentActivity() {
     // Downloads screen, since Compose only reacts to an actual value change.
     private var navigateToDownloadsRequest by mutableIntStateOf(0)
 
+    @OptIn(UnstableApi::class)
     @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
