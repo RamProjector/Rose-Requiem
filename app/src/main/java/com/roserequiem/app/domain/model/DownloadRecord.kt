@@ -45,4 +45,6 @@ data class DownloadRecord(
     val status: DownloadStatus,
     val timestamp: Long,
     val batchId: String = "",
+    /** Stable logical batch start time; zero means legacy history without this field. */
+    val batchStartedAt: Long = 0L,
 )
