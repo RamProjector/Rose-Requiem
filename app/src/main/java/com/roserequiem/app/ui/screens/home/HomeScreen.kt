@@ -71,7 +71,11 @@ import com.roserequiem.app.util.ui.SearchFABBoundsTransform
  *
  * @param viewModel The [HomeViewModel] instance.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalSharedTransitionApi::class,
+    UnstableApi::class,
+)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
