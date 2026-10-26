@@ -18,6 +18,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.media3.common.util.UnstableApi
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -47,6 +48,7 @@ import com.roserequiem.app.ui.screens.settings.SettingsViewModel
  *
  * @param navController The navigation controller.
  */
+@UnstableApi
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun Navigator(
