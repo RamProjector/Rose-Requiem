@@ -420,17 +420,18 @@ class HomeViewModel(
                     "Now-playing artwork snapshot was not written"
                 }
 
-                // Keep the URI unique so Coil cannot reuse stale artwork, but bound disk
-                // usage by removing older snapshots only after the replacement is complete.
-                nowPlayingArtDir.listFiles()
-                    ?.filter { it.isFile && it != file }
-                    ?.forEach { staleFile -> staleFile.delete() }
-
                 Uri.parse(file.absolutePath)
             }
         } catch (e: NullPointerException) {
             null
         }
+
+        // Keep the URI unique so Coil cannot reuse stale artwork. Clean old snapshots
+        // only after the new URI has been published to Compose, and keep the cache bounded.
+        val currentArtworkPath = playingSongAlbumArt?.path
+        File(context.cacheDir, "now_playing_art").listFiles()
+            ?.filter { it.isFile && it.absolutePath != currentArtworkPath }
+            ?.forEach { staleFile -> staleFile.delete() }
     }.onFailure {
         playingSongTitle = ""
         playingSongArtist = ""
