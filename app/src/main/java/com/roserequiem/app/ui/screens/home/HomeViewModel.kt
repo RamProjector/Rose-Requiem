@@ -416,6 +416,16 @@ class HomeViewModel(
                         "Unable to write now-playing artwork snapshot"
                     }
                 }
+                check(file.isFile && file.length() > 0L) {
+                    "Now-playing artwork snapshot was not written"
+                }
+
+                // Keep the URI unique so Coil cannot reuse stale artwork, but bound disk
+                // usage by removing older snapshots only after the replacement is complete.
+                nowPlayingArtDir.listFiles()
+                    ?.filter { it.isFile && it != file }
+                    ?.forEach { staleFile -> staleFile.delete() }
+
                 Uri.parse(file.absolutePath)
             }
         } catch (e: NullPointerException) {
