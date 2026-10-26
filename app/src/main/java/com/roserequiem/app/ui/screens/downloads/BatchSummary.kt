@@ -18,7 +18,9 @@ data class BatchSummary(
 ) {
     /** When this batch was queued -- used to sort batches newest-first, and to display
      *  "when" for the run. Fixed for the batch's lifetime, unlike [lastActivityAt]. */
-    val startedAt: Long get() = records.minOf { it.timestamp }
+    val startedAt: Long
+        get() = records.map { it.batchStartedAt }.filter { it > 0L }.minOrNull()
+            ?: records.minOf { it.timestamp } // Backward-compatible fallback for older history.
 
     /** Most recent status change in this batch. */
     val lastActivityAt: Long get() = records.maxOf { it.timestamp }
