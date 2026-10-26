@@ -235,4 +235,5 @@
         <item quantity="other">%1$d songs</item>
     </plurals>
     <string name="fix_history">Fix history</string>
+    <string name="play_song">Play song</string>
 </resources>
