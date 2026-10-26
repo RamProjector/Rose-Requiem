@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
     // Downloads screen, since Compose only reacts to an actual value change.
     private var navigateToDownloadsRequest by mutableIntStateOf(0)
 
-    @OptIn(UnstableApi::class)
+    @UnstableApi
     @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
