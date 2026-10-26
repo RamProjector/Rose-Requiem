@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import com.roserequiem.app.R
 import com.roserequiem.app.domain.model.Song
@@ -59,6 +60,7 @@ import com.roserequiem.app.ui.screens.home.components.HomeSearchBar
 import com.roserequiem.app.ui.screens.home.components.HomeSearchThing
 import com.roserequiem.app.ui.screens.home.components.SongItem
 import com.roserequiem.app.ui.screens.home.components.SortDialog
+import com.roserequiem.app.services.LocalPlaybackController
 import com.roserequiem.app.util.TrackJankState
 import com.roserequiem.app.util.ext.BackPressHandler
 import com.roserequiem.app.util.ext.lowercaseWithLocale
@@ -69,7 +71,11 @@ import com.roserequiem.app.util.ui.SearchFABBoundsTransform
  *
  * @param viewModel The [HomeViewModel] instance.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@UnstableApi
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalSharedTransitionApi::class,
+)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
@@ -177,6 +183,7 @@ fun LoadingScreen() {
     ExperimentalMaterial3Api::class,
     ExperimentalFoundationApi::class,
 )
+@UnstableApi
 @Composable
 fun HomeScreenLoaded(
     selected: SnapshotStateMap<String, Unit>,
@@ -393,7 +400,14 @@ fun HomeScreenLoaded(
                 animatedVisibilityScope = animatedVisibilityScope,
                 disableMarquee = viewModel.userSettingsController.disableMarquee,
                 showPath = viewModel.userSettingsController.showPath,
-                isNavigatingItem = navigatingFilePath == song.filePath
+                isNavigatingItem = navigatingFilePath == song.filePath,
+                onPlayRequest = {
+                    LocalPlaybackController.playQueue(
+                        context = context,
+                        songs = viewModel.displaySongs,
+                        selectedSong = song
+                    )
+                }
             )
         }
 

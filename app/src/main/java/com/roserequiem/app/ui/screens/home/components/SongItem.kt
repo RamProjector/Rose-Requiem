@@ -18,10 +18,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -55,6 +60,7 @@ fun SongItem(
     disableMarquee: Boolean = true,
     showPath: Boolean,
     isNavigatingItem: Boolean,
+    onPlayRequest: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -170,6 +176,17 @@ fun SongItem(
                         // tracker was pure per-frame overhead with no transition to show for it.
                     )
                 }
+            }
+        }
+        if (onPlayRequest != null) {
+            IconButton(
+                onClick = onPlayRequest,
+                modifier = Modifier.align(Alignment.CenterVertically)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.PlayArrow,
+                    contentDescription = stringResource(R.string.play_song)
+                )
             }
         }
     }
