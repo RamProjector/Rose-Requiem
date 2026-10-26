@@ -59,6 +59,7 @@ import com.roserequiem.app.ui.screens.home.components.HomeSearchBar
 import com.roserequiem.app.ui.screens.home.components.HomeSearchThing
 import com.roserequiem.app.ui.screens.home.components.SongItem
 import com.roserequiem.app.ui.screens.home.components.SortDialog
+import com.roserequiem.app.services.LocalPlaybackController
 import com.roserequiem.app.util.TrackJankState
 import com.roserequiem.app.util.ext.BackPressHandler
 import com.roserequiem.app.util.ext.lowercaseWithLocale
@@ -393,7 +394,14 @@ fun HomeScreenLoaded(
                 animatedVisibilityScope = animatedVisibilityScope,
                 disableMarquee = viewModel.userSettingsController.disableMarquee,
                 showPath = viewModel.userSettingsController.showPath,
-                isNavigatingItem = navigatingFilePath == song.filePath
+                isNavigatingItem = navigatingFilePath == song.filePath,
+                onPlayRequest = {
+                    LocalPlaybackController.playQueue(
+                        context = context,
+                        songs = viewModel.displaySongs,
+                        selectedSong = song
+                    )
+                }
             )
         }
 
