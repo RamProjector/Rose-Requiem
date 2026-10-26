@@ -58,19 +58,25 @@ class HomeScrollBenchmark {
         setupBlock = {
             pressHome()
             startActivityAndWait()
-            device.wait(Until.hasObject(By.scrollable(true)), 5_000)
+            check(device.wait(Until.hasObject(By.scrollable(true)), 5_000)) {
+                "Home did not expose a scrollable list within 5 seconds; refusing to record a non-scroll benchmark."
+            }
         }
     ) {
+        // Fail rather than silently reporting app-idle frames as scroll performance if
+        // the selector stops matching after startup or a future UI change.
+        val list = requireNotNull(device.findObject(By.scrollable(true))) {
+            "Home scroll benchmark could not find the scrollable list."
+        }
+
         // 3 down/up cycles per iteration, not just 1: a single fling is a thin
         // sample to compute P90/P99 out of. This gives each of the 5 iterations more
         // frames to work with, without changing what's actually being exercised.
-        device.findObject(By.scrollable(true))?.let { list ->
-            repeat(3) {
-                list.fling(Direction.DOWN)
-                device.waitForIdle()
-                list.fling(Direction.UP)
-                device.waitForIdle()
-            }
+        repeat(3) {
+            list.fling(Direction.DOWN)
+            device.waitForIdle()
+            list.fling(Direction.UP)
+            device.waitForIdle()
         }
     }
 }
