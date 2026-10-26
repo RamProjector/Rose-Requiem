@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.roserequiem.app.R
 import com.roserequiem.app.data.UserSettingsController
 import com.roserequiem.app.data.remote.lyrics_providers.LyricsProviderService
@@ -87,25 +88,32 @@ class LyricsFetchViewModel(
         generatedUsingString: String
     ) {
         val lrcContent = generateLrcContent(song, lyrics, generatedUsingString, lrcOffset, userSettingsController.directlyModifyTimestamps)
-        val file = newLyricsFilePath(filePath, song)
 
-        runCatching {
-            if (!isLegacyFileAccessRequired(filePath)) {
-                file.writeText(lrcContent)
-            } else {
-                saveToExternalPath(
-                    context = context,
-                    sourceFilePath = filePath,
-                    lrc = lrcContent,
-                    fileName = file.name,
-                    newLyricsFilePath = userSettingsController.sdCardPath
-                )
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val file = newLyricsFilePath(filePath, song)
+                    if (!isLegacyFileAccessRequired(filePath)) {
+                        file.writeText(lrcContent)
+                    } else {
+                        saveToExternalPath(
+                            context = context,
+                            sourceFilePath = filePath,
+                            lrc = lrcContent,
+                            fileName = file.name,
+                            newLyricsFilePath = userSettingsController.sdCardPath
+                        )
+                    }
+                    file.absolutePath
+                }
             }
-        }.onSuccess {
-            showToast(context, R.string.file_saved_to, file.absolutePath)
-        }.onFailure {
-            // Storage/SAF failures should be shown to the user rather than crash the lyrics screen.
-            showToast(context, R.string.lyrics_save_failed)
+
+            result.onSuccess { savedPath ->
+                showToast(context, R.string.file_saved_to, savedPath)
+            }.onFailure {
+                // Storage/SAF failures should be shown to the user rather than crash the lyrics screen.
+                showToast(context, R.string.lyrics_save_failed)
+            }
         }
     }
 
