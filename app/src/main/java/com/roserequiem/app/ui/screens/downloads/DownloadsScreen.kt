@@ -80,8 +80,11 @@ fun DownloadsScreen(
     val activeBatchState by BatchDownloadService.state.collectAsState()
     val batchActive = activeBatchState?.isComplete == false
 
-    val visibleBatches = remember(records, searchQuery, statusFilter) {
-        viewModel.visibleBatches(records, searchQuery, statusFilter)
+    // Group/sort only when history records change. Search and status changes
+    // filter these stable groups instead of rebuilding the grouping map each time.
+    val groupedBatches = remember(records) { groupIntoBatches(records) }
+    val visibleBatches = remember(groupedBatches, searchQuery, statusFilter) {
+        filterBatches(groupedBatches, searchQuery, statusFilter)
     }
 
     // "Selection mode" is implicit: any record checked at all is enough to swap the top

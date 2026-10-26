@@ -59,3 +59,30 @@ fun groupIntoBatches(records: List<DownloadRecord>): List<BatchSummary> =
         .groupBy { it.batchId.ifBlank { "legacy-${it.filePath}" } }
         .map { (batchId, batchRecords) -> BatchSummary(batchId, batchRecords) }
         .sortedByDescending { it.startedAt }
+
+
+/**
+ * Filters already-grouped batches without repeating grouping and sorting work.
+ * Batch summaries retain their true totals while expanded rows show only matches.
+ */
+fun filterBatches(
+    batches: List<BatchSummary>,
+    searchQuery: String,
+    statusFilter: DownloadStatus?,
+): List<FilteredBatch> {
+    val noFilterActive = statusFilter == null && searchQuery.isBlank()
+
+    return batches.mapNotNull { batch ->
+        val matching = if (noFilterActive) {
+            batch.records
+        } else {
+            batch.records.filter { record ->
+                (statusFilter == null || record.status == statusFilter) &&
+                    (searchQuery.isBlank() ||
+                        record.songName.contains(searchQuery, ignoreCase = true) ||
+                        record.artist.contains(searchQuery, ignoreCase = true))
+            }
+        }
+        if (matching.isEmpty()) null else FilteredBatch(batch, matching)
+    }
+}
