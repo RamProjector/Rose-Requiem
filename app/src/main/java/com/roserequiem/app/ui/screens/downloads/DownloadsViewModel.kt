@@ -120,15 +120,8 @@ class DownloadsViewModel(
      * [BatchDownloadService.isActive]) -- CONTINUE/RETRY are withheld while true, since
      * both would start a second one and only one is ever allowed to run at a time.
      */
-    fun availableActions(records: List<DownloadRecord>, batchActive: Boolean): Set<SelectionAction> {
-        val statuses = selectedRecords(records).map { it.status }.toSet()
-        return buildSet {
-            if (!batchActive && DownloadStatus.PAUSED in statuses) add(SelectionAction.CONTINUE)
-            if (!batchActive && statuses.any { it in RETRYABLE_STATUSES }) add(SelectionAction.RETRY)
-            if (statuses.any { it in ACTIVE_STATUSES }) add(SelectionAction.CANCEL)
-            if (statuses.any { it in REMOVABLE_STATUSES }) add(SelectionAction.REMOVE)
-        }
-    }
+    fun availableActions(records: List<DownloadRecord>, batchActive: Boolean): Set<SelectionAction> =
+        resolveSelectionActions(selectedRecords(records).map { it.status }.toSet(), batchActive)
 
     /**
      * Re-queues exactly the selected PAUSED songs, resuming from where they left off.
@@ -225,6 +218,20 @@ class DownloadsViewModel(
             if (matching.isEmpty()) null else FilteredBatch(batch, matching)
         }
     }
+}
+
+/**
+ * Pure selection-action policy, separated from ViewModel/repository state so status
+ * combinations and the single-active-batch rule can be unit-tested without Android.
+ */
+internal fun resolveSelectionActions(
+    statuses: Set<DownloadStatus>,
+    batchActive: Boolean,
+): Set<SelectionAction> = buildSet {
+    if (!batchActive && DownloadStatus.PAUSED in statuses) add(SelectionAction.CONTINUE)
+    if (!batchActive && statuses.any { it in RETRYABLE_STATUSES }) add(SelectionAction.RETRY)
+    if (statuses.any { it in ACTIVE_STATUSES }) add(SelectionAction.CANCEL)
+    if (statuses.any { it in REMOVABLE_STATUSES }) add(SelectionAction.REMOVE)
 }
 
 /** The four bulk actions the Downloads screen's multi-select toolbar can offer. */
