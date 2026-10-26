@@ -129,12 +129,13 @@ class BatchDownloadService : Service() {
         // right before it starts -- see CHUNK_SIZE's doc for why queueing them all
         // immediately would be actively worse than not chunking at all.
         val chunks = songs.chunked(CHUNK_SIZE)
-        // All batchIds decided now, not generated lazily inside markQueued, so they can
-        // be protected as a group before the first one is even queued -- otherwise a
-        // 1200-song/5-chunk run would evict its own chunk 1 (already finished!) the
-        // moment chunk 3's markQueued call pushes the total past MAX_RECORDS.
-        val batchIds = List(chunks.size) { UUID.randomUUID().toString() }
-        DownloadHistoryRepository.protectBatches(batchIds.toSet())
+        // One logical run gets one history batch id even though work is processed in
+        // bounded chunks. DownloadsScreen groups by batchId, so per-chunk IDs made a
+        // single user action appear as several unrelated batch cards.
+        // Protect the shared id for the entire run so completed earlier chunks remain
+        // visible while later chunks are queued.
+        val batchId = UUID.randomUUID().toString()
+        DownloadHistoryRepository.protectBatches(setOf(batchId))
         _state.value = BatchDownloadState(
             total = songs.size,
             ignoreEmbeddedLyrics = ignoreEmbeddedLyrics,
@@ -159,7 +160,7 @@ class BatchDownloadService : Service() {
             try {
                 for ((index, chunk) in chunks.withIndex()) {
                     _state.value = _state.value?.copy(chunkIndex = index + 1)
-                    DownloadHistoryRepository.markQueued(chunk, batchIds[index])
+                    DownloadHistoryRepository.markQueued(chunk, batchId)
 
                     downloadLyrics(
                         songs = chunk,
@@ -359,7 +360,7 @@ class BatchDownloadService : Service() {
          * the Downloads screen a huge run just shows up as several ordinary batch cards
          * rather than needing any new UI concept.
          */
-        private const val CHUNK_SIZE = DownloadHistoryRepository.MAX_RECORDS / 2
+        private const val CHUNK_SIZE = 250
 
         private val _state = MutableStateFlow<BatchDownloadState?>(null)
 
