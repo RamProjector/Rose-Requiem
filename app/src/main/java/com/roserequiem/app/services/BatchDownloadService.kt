@@ -352,13 +352,10 @@ class BatchDownloadService : Service() {
         private const val EXTRA_IGNORE_EMBEDDED_LYRICS = "extra_ignore_embedded_lyrics"
 
         /**
-         * Songs per [DownloadHistoryRepository.markQueued] call. Kept well under
-         * [DownloadHistoryRepository.MAX_RECORDS] (half of it), not sized against it --
-         * a chunk this size queues, leaving comfortable headroom for whatever history
-         * already existed before this run to survive alongside it instead of being
-         * evicted the moment the chunk is queued. Each chunk gets its own batchId, so on
-         * the Downloads screen a huge run just shows up as several ordinary batch cards
-         * rather than needing any new UI concept.
+         * Songs processed per chunk. This is deliberately independent of the history
+         * retention ceiling: it bounds each provider-processing unit without changing
+         * the user's logical batch. Chunks share one batchId and appear as one expandable
+         * batch in Downloads, while only one chunk is queued at a time.
          */
         private const val CHUNK_SIZE = 250
 
