@@ -323,7 +323,7 @@ class HomeViewModel(
         // from "show all" to "zero matches" is observable even when both lists are empty.
         _filtersActive.value = hasActiveFilters()
         if (searchQuery.isNotEmpty()) {
-            updateSearchResults(searchQuery.lowercaseWithLocale())
+            updateSearchResults(searchQuery)
         } else {
             _searchResults.value = currentFilterSource()
         }
