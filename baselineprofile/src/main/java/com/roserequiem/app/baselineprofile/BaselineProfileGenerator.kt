@@ -42,15 +42,18 @@ class BaselineProfileGenerator {
         // covered in HomeViewModel/HomeScreen).
         pressHome()
         startActivityAndWait()
-
-        // Let the song list load, then scroll it -- covers recomposition and
-        // Coil's image-loading path for SongItem.
-        device.wait(Until.hasObject(By.scrollable(true)), 5_000)
-        device.findObject(By.scrollable(true))?.let { list ->
-            list.fling(Direction.DOWN)
-            device.waitForIdle()
-            list.fling(Direction.UP)
-            device.waitForIdle()
+        check(device.wait(Until.hasObject(By.scrollable(true)), 5_000)) {
+            "Home did not expose a scrollable list within 5 seconds; refusing to generate a profile from a non-scroll journey."
         }
+
+        // Scroll the actual song list -- do not silently generate a profile that
+        // misses the intended LazyColumn path if the selector or Home UI changes.
+        val list = requireNotNull(device.findObject(By.scrollable(true))) {
+            "Baseline profile could not find the Home scrollable list."
+        }
+        list.fling(Direction.DOWN)
+        device.waitForIdle()
+        list.fling(Direction.UP)
+        device.waitForIdle()
     }
 }
