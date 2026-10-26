@@ -1,6 +1,6 @@
 [versions]
 junit = "4.13.2"
-accompanist-permissions = "0.34.0"
+accompanist-permissions = "0.37.3"
 agp = "8.13.0"
 coil-compose = "3.5.0"
 okhttp = "5.4.0"
