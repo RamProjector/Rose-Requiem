@@ -72,6 +72,24 @@ class BatchSummaryTest {
         assertEquals(120L, batch.lastActivityAt)
     }
 
+    @Test
+    fun batchStartTimeAndOrderingStayStableAfterStatusTimestampsAdvance() {
+        val records = listOf(
+            record("/music/a.flac", "older-run", DownloadStatus.SUCCESS, 900L)
+                .copy(batchStartedAt = 100L),
+            record("/music/b.flac", "older-run", DownloadStatus.SUCCESS, 1_000L)
+                .copy(batchStartedAt = 100L),
+            record("/music/c.flac", "newer-run", DownloadStatus.QUEUED, 250L)
+                .copy(batchStartedAt = 200L),
+        )
+
+        val batches = groupIntoBatches(records)
+
+        assertEquals(listOf("newer-run", "older-run"), batches.map { it.batchId })
+        assertEquals(100L, batches[1].startedAt)
+        assertEquals(1_000L, batches[1].lastActivityAt)
+    }
+
     private fun record(
         filePath: String,
         batchId: String,
