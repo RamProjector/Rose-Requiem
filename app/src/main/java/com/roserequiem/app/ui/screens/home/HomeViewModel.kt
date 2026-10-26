@@ -118,6 +118,9 @@ class HomeViewModel(
 
     fun updateAllSongs(context: Context, sortBy: SortValues, sortOrder: SortOrders) = viewModelScope.launch(Dispatchers.IO) {
         allSongs = getAllSongs(context, sortBy, sortOrder)
+        // Read active-session metadata and write the transient artwork snapshot off the main thread.
+        // Run this after publishing the song list so matching the current track cannot race `allSongs`.
+        updatePlayingSongInfo(context)
     }
 
     /**
@@ -180,7 +183,6 @@ class HomeViewModel(
             cursor?.close()
             cachedSongs = songs
             viewModelScope.launch { filterSongs() }
-            viewModelScope.launch { updatePlayingSongInfo(context) }
             cachedSongs!!
         }
     }
