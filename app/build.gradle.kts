@@ -103,6 +103,8 @@ dependencies {
     implementation(libs.ktor.core)
     implementation(libs.ktor.cio)
     implementation(libs.taglib)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.session)
     implementation(libs.kotlin.onetimepassword)
     implementation(libs.datastore.preferences)
     implementation(libs.ui.tooling) //NOT RECOMMENDED
