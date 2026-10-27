@@ -36,6 +36,7 @@ import com.roserequiem.app.ui.common.animatedComposable
 import com.roserequiem.app.ui.screens.downloads.DownloadsScreen
 import com.roserequiem.app.ui.screens.home.HomeScreen
 import com.roserequiem.app.ui.screens.home.HomeViewModel
+import com.roserequiem.app.ui.screens.metadata.MetadataEditorScreen
 import com.roserequiem.app.ui.screens.init.InitScreen
 import com.roserequiem.app.ui.screens.init.InitScreenViewModel
 import com.roserequiem.app.ui.screens.lyricsFetch.LyricsFetchScreen
@@ -61,7 +62,7 @@ fun Navigator(
     // implying you're still on a tab.
     val currentEntry by navController.currentBackStackEntryAsState()
     val showBottomBar = currentEntry?.destination?.let {
-        it.hasRoute<ScreenHome>() || it.hasRoute<ScreenDownloads>()
+        it.hasRoute<ScreenHome>() || it.hasRoute<ScreenDownloads>() || it.hasRoute<ScreenPlaylists>()
     } ?: false
 
     Scaffold(
@@ -97,6 +98,10 @@ fun Navigator(
                 }
                 animatedComposable<ScreenDownloads> {
                     DownloadsScreen(userSettingsController = userSettingsController)
+                }
+                animatedComposable<MetadataEditorRoute> { entry ->
+                    val args = entry.toRoute<MetadataEditorRoute>()
+                    MetadataEditorScreen(filePath = args.filePath, onBack = { navController.popBackStack() })
                 }
 
                 animatedComposable<LyricsFetchScreen>() {
@@ -181,6 +186,9 @@ object ScreenHome
 
 @Serializable
 object ScreenDownloads
+
+@Serializable
+data class MetadataEditorRoute(val filePath: String)
 
 @Serializable
 data class LyricsFetchScreen(
