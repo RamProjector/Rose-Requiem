@@ -256,5 +256,4 @@
     <string name="playlist_name_required">Enter a playlist name.</string>
     <string name="playlist_save_failed">Could not save the playlist. Please try again.</string>
     <string name="playlist_action_failed">Playlist action failed</string>
-    <string name="ok">OK</string>
 </resources>
