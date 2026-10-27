@@ -51,6 +51,7 @@ import androidx.navigation.NavHostController
 import com.roserequiem.app.R
 import com.roserequiem.app.domain.model.Song
 import com.roserequiem.app.ui.LyricsFetchScreen
+import com.roserequiem.app.ui.MusicCategoriesRoute
 import com.roserequiem.app.ui.ScreenSettings
 import com.roserequiem.app.ui.screens.home.components.BatchDownloadLyrics
 import com.roserequiem.app.ui.screens.home.components.FilterAndSongCount
@@ -117,6 +118,7 @@ fun HomeScreen(
                     onNavigateToSettingsSectionRequest = { navController.navigate(ScreenSettings) },
                     onProviderSelectRequest = viewModel.userSettingsController::updateSelectedProviders,
                     onBatchDownloadRequest = { isBatchDownload = true },
+                    onCategorizeMusicRequest = { navController.navigate(MusicCategoriesRoute) },
                     selectedProvider = viewModel.userSettingsController.selectedProvider,
                     onSelectAllSongsRequest = viewModel::selectAllDisplayingSongs,
                     onInvertSongSelectionRequest = viewModel::invertSongSelection,
