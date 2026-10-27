@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.roserequiem.app.R
 import com.roserequiem.app.ui.screens.downloads.BatchSummary
@@ -47,7 +48,7 @@ fun BatchSummaryItem(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onToggleExpanded)
+            .clickable(role = Role.Button, onClick = onToggleExpanded)
             .animateContentSize()
             .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
@@ -74,7 +75,9 @@ fun BatchSummaryItem(
             }
             Icon(
                 imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                contentDescription = null,
+                contentDescription = stringResource(
+                    if (expanded) R.string.collapse_batch else R.string.expand_batch,
+                ),
             )
         }
 
