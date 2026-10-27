@@ -245,6 +245,7 @@
     <string name="fix_history">Fix history</string>
     <string name="play_song">Play song</string>
 
+    <string name="genre">Genre</string>
     <string name="metadata_editor">Metadata editor</string>
     <string name="save_metadata">Save metadata</string>
     <string name="track_number">Track number</string>
