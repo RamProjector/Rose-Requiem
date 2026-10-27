@@ -123,6 +123,15 @@ fun HomeDropdownContent(
     DropdownMenuItem(
         text = {
             Text(
+                text = stringResource(R.string.audio_downloads),
+                modifier = Modifier.padding(horizontal = 6.dp),
+            )
+        },
+        onClick = onAudioDownloadsRequest
+    )
+    DropdownMenuItem(
+        text = {
+            Text(
                 text = stringResource(id = R.string.settings),
                 modifier = Modifier.padding(horizontal = 6.dp),
             )
