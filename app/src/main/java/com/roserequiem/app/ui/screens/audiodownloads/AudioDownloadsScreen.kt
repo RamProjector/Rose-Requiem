@@ -1,5 +1,7 @@
 package com.roserequiem.app.ui.screens.audiodownloads
 
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,7 +11,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -49,7 +50,7 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
     var downloadedBytes by remember { mutableLongStateOf(0L) }
     var totalBytes by remember { mutableStateOf<Long?>(null) }
     var resultMessage by remember { mutableStateOf<String?>(null) }
-    var lastSavedLocation by remember { mutableStateOf<String?>(null) }
+    val progressHandler = remember { Handler(Looper.getMainLooper()) }
 
     Scaffold(
         topBar = {
@@ -90,18 +91,18 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
                     downloadedBytes = 0L
                     totalBytes = null
                     resultMessage = null
-                    lastSavedLocation = null
                     scope.launch {
                         val result = withContext(Dispatchers.IO) {
                             AuthorizedFlacDownloader(context).download(sourceUrl, fileName) { current, total ->
-                                downloadedBytes = current
-                                totalBytes = total
+                                progressHandler.post {
+                                    downloadedBytes = current
+                                    totalBytes = total
+                                }
                             }
                         }
                         downloading = false
                         when (result) {
                             is FlacDownloadResult.Success -> {
-                                lastSavedLocation = result.location
                                 resultMessage = flacDownloadSuccessTemplate.replace("__NAME__", result.displayName).replace("__LOCATION__", result.location)
                             }
                             is FlacDownloadResult.Failure -> resultMessage = result.message
