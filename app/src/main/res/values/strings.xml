@@ -238,4 +238,23 @@
     </plurals>
     <string name="fix_history">Fix history</string>
     <string name="play_song">Play song</string>
+
+    <string name="playlists">Playlists</string>
+    <string name="create_playlist">Create playlist</string>
+    <string name="rename_playlist">Rename playlist</string>
+    <string name="delete_playlist">Delete playlist</string>
+    <string name="playlist_name">Playlist name</string>
+    <string name="playlists_empty_title">Your playlists start here</string>
+    <string name="playlists_empty_message">Create a playlist, then add tracks from your local music library.</string>
+    <string name="playlist_track_count">%1$d tracks</string>
+    <string name="add_tracks">Add tracks</string>
+    <string name="add_tracks_to_playlist">Add tracks to %1$s</string>
+    <string name="add_selected_tracks">Add selected (%1$d)</string>
+    <string name="remove_track">Remove track</string>
+    <string name="play_playlist">Play playlist</string>
+    <string name="playlist_no_playable_tracks">This playlist has no accessible audio files. Add tracks or check that the files still exist.</string>
+    <string name="playlist_name_required">Enter a playlist name.</string>
+    <string name="playlist_save_failed">Could not save the playlist. Please try again.</string>
+    <string name="playlist_action_failed">Playlist action failed</string>
+    <string name="ok">OK</string>
 </resources>
