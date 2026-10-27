@@ -246,7 +246,7 @@ fun PlaylistsScreen(dataStore: DataStore<Preferences>) {
                     val selected = libraryTracks.filter { selectedPaths.contains(it.filePath) }
                     scope.launch {
                         runCatching { repository.addTracks(playlist.id, selected) }
-                            .onFailure { errorMessage = it.message ?: context.getString(R.string.playlist_save_failed) }
+                            .onFailure { errorMessage = it.message ?: playlistSaveFailedMessage }
                         addTracksToPlaylist = null
                     }
                 }) { Text(stringResource(R.string.add_selected_tracks, selectedPaths.size)) }
