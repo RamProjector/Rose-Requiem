@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -18,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.media3.common.util.UnstableApi
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -34,14 +36,17 @@ import com.roserequiem.app.data.remote.lyrics_providers.LyricsProviderService
 import com.roserequiem.app.services.BatchDownloadService
 import com.roserequiem.app.ui.common.animatedComposable
 import com.roserequiem.app.ui.screens.downloads.DownloadsScreen
+import com.roserequiem.app.ui.screens.categories.MusicCategoriesScreen
 import com.roserequiem.app.ui.screens.home.HomeScreen
 import com.roserequiem.app.ui.screens.home.HomeViewModel
 import com.roserequiem.app.ui.screens.init.InitScreen
 import com.roserequiem.app.ui.screens.init.InitScreenViewModel
 import com.roserequiem.app.ui.screens.lyricsFetch.LyricsFetchScreen
+import com.roserequiem.app.ui.screens.playlists.PlaylistsScreen
 import com.roserequiem.app.ui.screens.lyricsFetch.LyricsFetchViewModel
 import com.roserequiem.app.ui.screens.settings.SettingsScreen
 import com.roserequiem.app.ui.screens.settings.SettingsViewModel
+import com.roserequiem.app.util.dataStore
 
 /**
  * Composable function for handling navigation within the app.
@@ -61,7 +66,7 @@ fun Navigator(
     // implying you're still on a tab.
     val currentEntry by navController.currentBackStackEntryAsState()
     val showBottomBar = currentEntry?.destination?.let {
-        it.hasRoute<ScreenHome>() || it.hasRoute<ScreenDownloads>()
+        it.hasRoute<ScreenHome>() || it.hasRoute<ScreenDownloads>() || it.hasRoute<ScreenPlaylists>()
     } ?: false
 
     Scaffold(
@@ -97,6 +102,12 @@ fun Navigator(
                 }
                 animatedComposable<ScreenDownloads> {
                     DownloadsScreen(userSettingsController = userSettingsController)
+                }
+                animatedComposable<ScreenPlaylists> {
+                    PlaylistsScreen(dataStore = LocalContext.current.dataStore)
+                }
+                animatedComposable<MusicCategoriesRoute> {
+                    MusicCategoriesScreen(dataStore = LocalContext.current.dataStore, onBack = { navController.popBackStack() })
                 }
 
                 animatedComposable<LyricsFetchScreen>() {
@@ -170,6 +181,18 @@ private fun RoseRequiemBottomBar(
             },
             label = { Text(stringResource(id = R.string.downloads)) },
         )
+        NavigationBarItem(
+            selected = currentEntry?.destination?.hasRoute<ScreenPlaylists>() ?: false,
+            onClick = {
+                navController.navigate(ScreenPlaylists) {
+                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
+            icon = { Icon(Icons.Filled.LibraryMusic, contentDescription = null) },
+            label = { Text(stringResource(id = R.string.playlists)) },
+        )
     }
 }
 
@@ -181,6 +204,12 @@ object ScreenHome
 
 @Serializable
 object ScreenDownloads
+
+@Serializable
+object ScreenPlaylists
+
+@Serializable
+object MusicCategoriesRoute
 
 @Serializable
 data class LyricsFetchScreen(

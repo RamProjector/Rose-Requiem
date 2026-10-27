@@ -38,6 +38,7 @@ fun HomeAppBar(
     onNavigateToSettingsSectionRequest: () -> Unit,
     onProviderSelectRequest: (Providers) -> Unit,
     onBatchDownloadRequest: () -> Unit,
+    onCategorizeMusicRequest: () -> Unit,
     onSelectAllSongsRequest: () -> Unit,
     onInvertSongSelectionRequest: () -> Unit,
     cachedSize: Int,
@@ -122,6 +123,7 @@ fun HomeAppBar(
                     selectedProvider = selectedProvider,
                     onProviderSelectRequest = onProviderSelectRequest,
                     onBatchDownloadRequest = onBatchDownloadRequest,
+                    onCategorizeMusicRequest = onCategorizeMusicRequest,
                 )
             }
         },
