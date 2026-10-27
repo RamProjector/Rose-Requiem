@@ -59,7 +59,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-@OptIn(ExperimentalMaterial3Api::class, UnstableApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
+@UnstableApi
 @Composable
 fun PlaylistsScreen(dataStore: DataStore<Preferences>) {
     val context = LocalContext.current
