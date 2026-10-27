@@ -55,6 +55,7 @@ import androidx.navigation.NavHostController
 import com.roserequiem.app.R
 import com.roserequiem.app.domain.model.Song
 import com.roserequiem.app.ui.LyricsFetchScreen
+import com.roserequiem.app.ui.MetadataEditorRoute
 import com.roserequiem.app.ui.ScreenSettings
 import com.roserequiem.app.ui.screens.home.components.BatchDownloadLyrics
 import com.roserequiem.app.ui.screens.home.components.FilterAndSongCount
@@ -124,6 +125,8 @@ fun HomeScreen(
                     selectedProvider = viewModel.userSettingsController.selectedProvider,
                     onSelectAllSongsRequest = viewModel::selectAllDisplayingSongs,
                     onInvertSongSelectionRequest = viewModel::invertSongSelection,
+                    selectedFilePath = viewModel.selectedSongs.keys.singleOrNull(),
+                    onEditMetadataRequest = { filePath -> navController.navigate(MetadataEditorRoute(filePath)) },
                     cachedSize = cachedSize
                 )
             }
