@@ -151,7 +151,7 @@ fun PlaylistsScreen(dataStore: DataStore<Preferences>) {
                                     }
                                 }) { Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.play_playlist)) }
                             }
-                            playlist.tracks.forEach { track ->
+                            for (track in playlist.tracks) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically
