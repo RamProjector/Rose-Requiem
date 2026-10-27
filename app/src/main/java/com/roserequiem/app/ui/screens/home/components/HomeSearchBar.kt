@@ -1,6 +1,5 @@
 package com.roserequiem.app.ui.screens.home.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.isImeVisible
@@ -11,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
@@ -75,25 +75,31 @@ fun HomeSearchBar(
         query,
         onValueChange = onQueryChange,
         leadingIcon = {
-            Icon(
-                Icons.Filled.Search,
-                contentDescription = stringResource(id = R.string.search),
-                modifier = Modifier.clickable {
+            IconButton(
+                onClick = {
                     onShowSearchChange(false)
                     onShowingSearchChange(false)
                 }
-            )
+            ) {
+                Icon(
+                    Icons.Filled.Search,
+                    contentDescription = stringResource(id = R.string.search),
+                )
+            }
         },
         trailingIcon = {
-            Icon(
-                imageVector = Icons.Default.Clear,
-                contentDescription = stringResource(id = R.string.clear),
-                modifier = Modifier.clickable {
+            IconButton(
+                onClick = {
                     onQueryChange("")
                     onShowSearchChange(false)
                     onShowingSearchChange(false)
                 }
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = stringResource(id = R.string.clear),
+                )
+            }
         },
         placeholder = { Text(stringResource(id = R.string.search)) },
         shape = ShapeDefaults.ExtraLarge,
