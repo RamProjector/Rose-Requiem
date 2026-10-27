@@ -57,6 +57,9 @@ private data class EditableTags(
 @Composable
 fun MetadataEditorScreen(filePath: String, onBack: () -> Unit) {
     val context = LocalContext.current
+    val readFailureTemplate = stringResource(R.string.metadata_read_failed, "__ERROR__")
+    val writeFailureTemplate = stringResource(R.string.metadata_write_failed, "__ERROR__")
+    val savedMessage = stringResource(R.string.metadata_saved)
     val scope = rememberCoroutineScope()
     var tags by remember(filePath) { mutableStateOf(EditableTags()) }
     var originalTags by remember(filePath) { mutableStateOf(EditableTags()) }
@@ -71,7 +74,7 @@ fun MetadataEditorScreen(filePath: String, onBack: () -> Unit) {
             tags = it
             originalTags = it
         }.onFailure {
-            message = context.getString(R.string.metadata_read_failed, it.message ?: "")
+            message = readFailureTemplate.replace("__ERROR__", it.message.orEmpty())
         }
         loading = false
     }
@@ -143,9 +146,9 @@ fun MetadataEditorScreen(filePath: String, onBack: () -> Unit) {
                         saving = false
                         result.onSuccess {
                             originalTags = tags
-                            message = context.getString(R.string.metadata_saved)
+                            message = savedMessage
                         }.onFailure {
-                            message = context.getString(R.string.metadata_write_failed, it.message ?: "")
+                            message = writeFailureTemplate.replace("__ERROR__", it.message.orEmpty())
                         }
                     }
                 }) { Text(stringResource(R.string.save)) }
