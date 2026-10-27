@@ -256,4 +256,14 @@
     <string name="playlist_name_required">Enter a playlist name.</string>
     <string name="playlist_save_failed">Could not save the playlist. Please try again.</string>
     <string name="playlist_action_failed">Playlist action failed</string>
+
+    <string name="music_categories">Music categories</string>
+    <string name="no_category_suggestions">No clear category suggestions yet</string>
+    <string name="category_suggestions_explanation">These are on-device suggestions based on words in local song titles and file names. Each suggestion explains the matched keyword; it is not an AI judgment about the audio itself. Review the tracks before using the generated playlist.</string>
+    <string name="category_track_count">%1$d suggested tracks</string>
+    <string name="category_create_playlist">Create %1$s playlist</string>
+    <string name="category_playlist_exists">%1$s playlist already exists</string>
+    <string name="category_playlist_created">Created playlist: %1$s</string>
+    <string name="category_playlist_failed">Could not create the playlist. Please try again.</string>
+    <string name="categorize_music">Suggest playlists</string>
 </resources>
