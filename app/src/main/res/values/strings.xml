@@ -266,4 +266,18 @@
     <string name="category_playlist_created">Created playlist: %1$s</string>
     <string name="category_playlist_failed">Could not create the playlist. Please try again.</string>
     <string name="categorize_music">Suggest playlists</string>
+
+    <string name="now_playing">Now playing</string>
+    <string name="player_connection_failed">Could not connect to the playback service</string>
+    <string name="player_empty_queue">Nothing is playing yet</string>
+    <string name="player_empty_queue_hint">Start a song from your library, then open the player to control playback and the queue.</string>
+    <string name="toggle_shuffle">Toggle shuffle</string>
+    <string name="toggle_repeat">Change repeat mode</string>
+    <string name="previous_track">Previous track</string>
+    <string name="next_track">Next track</string>
+    <string name="pause_playback">Pause playback</string>
+    <string name="resume_playback">Resume playback</string>
+    <string name="playback_queue">Queue (%1$d)</string>
+    <string name="playing">Playing</string>
+    <string name="open_player">Open music player</string>
 </resources>
