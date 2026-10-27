@@ -102,6 +102,9 @@ fun Navigator(
                 animatedComposable<ScreenDownloads> {
                     DownloadsScreen(userSettingsController = userSettingsController)
                 }
+                animatedComposable<ScreenPlaylists> {
+                    PlaylistsScreen(dataStore = LocalContext.current.dataStore)
+                }
 
                 animatedComposable<LyricsFetchScreen>() {
                     val args = it.toRoute<LyricsFetchScreen>()
@@ -197,6 +200,9 @@ object ScreenHome
 
 @Serializable
 object ScreenDownloads
+
+@Serializable
+object ScreenPlaylists
 
 @Serializable
 data class LyricsFetchScreen(
