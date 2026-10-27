@@ -360,19 +360,19 @@ fun HomeScreenLoaded(
         }
 
         if (viewModel.displaySongs.isEmpty()) {
-            val emptyTitleRes = when {
-                viewModel.searchQuery.isNotBlank() -> R.string.home_no_search_results
-                viewModel.userSettingsController.hideLyrics ||
-                    viewModel.userSettingsController.blacklistedFolders.any { it.isNotBlank() } ->
-                    R.string.home_no_filter_results
-                else -> R.string.home_empty_library_title
-            }
-            val emptyMessageRes = when {
-                viewModel.searchQuery.isNotBlank() -> R.string.home_no_search_results_message
-                viewModel.userSettingsController.hideLyrics ||
-                    viewModel.userSettingsController.blacklistedFolders.any { it.isNotBlank() } ->
+            val filtersActive = viewModel.userSettingsController.hideLyrics ||
+                viewModel.userSettingsController.blacklistedFolders.any { it.isNotBlank() }
+            val emptyStateKind = resolveHomeEmptyStateKind(
+                searchQuery = viewModel.searchQuery,
+                filtersActive = filtersActive,
+            )
+            val (emptyTitleRes, emptyMessageRes) = when (emptyStateKind) {
+                HomeEmptyStateKind.SEARCH -> R.string.home_no_search_results to
+                    R.string.home_no_search_results_message
+                HomeEmptyStateKind.FILTER -> R.string.home_no_filter_results to
                     R.string.home_no_filter_results_message
-                else -> R.string.home_empty_library_message
+                HomeEmptyStateKind.LIBRARY -> R.string.home_empty_library_title to
+                    R.string.home_empty_library_message
             }
             item(key = "home_empty_state") {
                 HomeEmptyState(
