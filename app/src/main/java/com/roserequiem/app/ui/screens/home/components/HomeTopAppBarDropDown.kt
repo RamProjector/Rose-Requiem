@@ -34,6 +34,7 @@ fun HomeTopAppBarDropDown(
     onProviderSelectRequest: (Providers) -> Unit,
     onBatchDownloadRequest: () -> Unit,
     onCategorizeMusicRequest: () -> Unit,
+    onOpenPlayerRequest: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var expandedProviders by remember { mutableStateOf(false) }
@@ -90,6 +91,10 @@ fun HomeTopAppBarDropDown(
                         expanded = false
                         onCategorizeMusicRequest()
                     },
+                    onOpenPlayerRequest = {
+                        expanded = false
+                        onOpenPlayerRequest()
+                    },
                 )
         }
     }
@@ -101,6 +106,7 @@ fun HomeDropdownContent(
     onBatchDownloadRequest: () -> Unit,
     onNavigateToSettingsSectionRequest: () -> Unit,
     onCategorizeMusicRequest: () -> Unit,
+    onOpenPlayerRequest: () -> Unit,
 ) = Column {
     DropdownMenuItem(
         text = {
@@ -134,6 +140,15 @@ fun HomeDropdownContent(
             )
         },
         onClick = onCategorizeMusicRequest
+    )
+    DropdownMenuItem(
+        text = {
+            Text(
+                text = stringResource(R.string.open_player),
+                modifier = Modifier.padding(horizontal = 6.dp),
+            )
+        },
+        onClick = onOpenPlayerRequest
     )
     DropdownMenuItem(
         text = {
