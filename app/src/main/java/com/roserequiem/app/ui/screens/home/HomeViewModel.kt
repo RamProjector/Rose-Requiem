@@ -52,7 +52,7 @@ internal fun resolveHomeEmptyStateKind(
     searchQuery: String,
     filtersActive: Boolean,
 ): HomeEmptyStateKind = when {
-    searchQuery.isNotBlank() -> HomeEmptyStateKind.SEARCH
+    searchQuery.isNotEmpty() -> HomeEmptyStateKind.SEARCH
     filtersActive -> HomeEmptyStateKind.FILTER
     else -> HomeEmptyStateKind.LIBRARY
 }
