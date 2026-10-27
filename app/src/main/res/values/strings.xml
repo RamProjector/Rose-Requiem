@@ -62,6 +62,12 @@
     <string name="api_rate_limit_reached">%1$s API rate limit reached</string>
     <string name="please_try_again_later">Please try again later</string>
     <string name="save_lrc_file">Save .lrc file</string>
+    <string name="home_no_search_results">No matching songs</string>
+    <string name="home_no_search_results_message">Try another title or artist.</string>
+    <string name="home_no_filter_results">No songs match these filters</string>
+    <string name="home_no_filter_results_message">Adjust or clear your filters to see more songs.</string>
+    <string name="home_empty_library_title">No music found</string>
+    <string name="home_empty_library_message">Add music files to your device to see them in your library.</string>
     <string name="no_results">No results</string>
     <string name="no_internet_server">No internet connection or server is down</string>
     <string name="unknown">Unknown</string>
