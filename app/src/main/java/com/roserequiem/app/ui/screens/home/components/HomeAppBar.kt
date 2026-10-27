@@ -39,6 +39,7 @@ fun HomeAppBar(
     onProviderSelectRequest: (Providers) -> Unit,
     onBatchDownloadRequest: () -> Unit,
     onCategorizeMusicRequest: () -> Unit,
+    onOpenPlayerRequest: () -> Unit,
     onSelectAllSongsRequest: () -> Unit,
     onInvertSongSelectionRequest: () -> Unit,
     cachedSize: Int,
@@ -124,6 +125,7 @@ fun HomeAppBar(
                     onProviderSelectRequest = onProviderSelectRequest,
                     onBatchDownloadRequest = onBatchDownloadRequest,
                     onCategorizeMusicRequest = onCategorizeMusicRequest,
+                    onOpenPlayerRequest = onOpenPlayerRequest,
                 )
             }
         },
