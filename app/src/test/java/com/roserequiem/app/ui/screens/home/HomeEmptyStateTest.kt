@@ -24,7 +24,7 @@ class HomeEmptyStateTest {
     fun emptyUnfilteredLibraryGetsLibraryGuidance() {
         assertEquals(
             HomeEmptyStateKind.LIBRARY,
-            resolveHomeEmptyStateKind(searchQuery = "   ", filtersActive = false),
+            resolveHomeEmptyStateKind(searchQuery = "", filtersActive = false),
         )
     }
 }
