@@ -246,7 +246,7 @@ fun DownloadsScreen(
                                             onDismiss = onDismiss,
                                         )
                                     }
-                                    HorizontalDivider()
+                                    HorizontalDivider(modifier = Modifier.padding(start = 16.dp))
                                 }
                             }
                         }
