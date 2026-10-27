@@ -27,6 +27,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -45,6 +46,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
@@ -260,8 +262,8 @@ fun HomeScreenLoaded(
                 modifier = Modifier.padding(
                     top = 5.dp,
                     bottom = 5.dp,
-                    start = 22.dp,
-                    end = 4.dp
+                    start = 16.dp,
+                    end = 16.dp
                 ),
             ) {
                 HomeSearchThing(
@@ -356,6 +358,29 @@ fun HomeScreenLoaded(
             }
         }
 
+        if (viewModel.displaySongs.isEmpty()) {
+            val emptyTitleRes = when {
+                viewModel.searchQuery.isNotBlank() -> R.string.home_no_search_results
+                viewModel.userSettingsController.hideLyrics ||
+                    viewModel.userSettingsController.blacklistedFolders.any { it.isNotBlank() } ->
+                    R.string.home_no_filter_results
+                else -> R.string.home_empty_library_title
+            }
+            val emptyMessageRes = when {
+                viewModel.searchQuery.isNotBlank() -> R.string.home_no_search_results_message
+                viewModel.userSettingsController.hideLyrics ||
+                    viewModel.userSettingsController.blacklistedFolders.any { it.isNotBlank() } ->
+                    R.string.home_no_filter_results_message
+                else -> R.string.home_empty_library_message
+            }
+            item(key = "home_empty_state") {
+                HomeEmptyState(
+                    titleRes = emptyTitleRes,
+                    messageRes = emptyMessageRes,
+                )
+            }
+        }
+
         items(
             count = viewModel.displaySongs.size,
             key = { index -> viewModel.displaySongs[index].filePath ?: index },
@@ -412,5 +437,36 @@ fun HomeScreenLoaded(
         }
 
         item { Spacer(modifier = Modifier.height(4.dp)) }
+    }
+}
+
+@Composable
+private fun HomeEmptyState(
+    titleRes: Int,
+    messageRes: Int,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 28.dp, vertical = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Search,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = stringResource(titleRes),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(messageRes),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
 }
