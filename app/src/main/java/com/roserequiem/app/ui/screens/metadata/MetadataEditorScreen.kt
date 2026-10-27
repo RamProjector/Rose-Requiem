@@ -52,7 +52,8 @@ private data class EditableTags(
     val trackNumber: String = "",
 )
 
-@OptIn(ExperimentalMaterial3Api::class, UnstableApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
+@UnstableApi
 @Composable
 fun MetadataEditorScreen(filePath: String, onBack: () -> Unit) {
     val context = LocalContext.current
