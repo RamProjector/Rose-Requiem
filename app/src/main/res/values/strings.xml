@@ -30,6 +30,8 @@
     <string name="batch_status_active">%1$d active</string>
     <string name="batch_status_queued">%1$d queued</string>
     <string name="batch_status_of_total">%1$s of %2$d</string>
+    <string name="expand_batch">Expand download batch</string>
+    <string name="collapse_batch">Collapse download batch</string>
     <plurals name="batch_song_count">
         <item quantity="one">%1$d song</item>
         <item quantity="other">%1$d songs</item>
