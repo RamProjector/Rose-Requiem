@@ -64,6 +64,9 @@ import java.io.File
 @Composable
 fun PlaylistsScreen(dataStore: DataStore<Preferences>) {
     val context = LocalContext.current
+    val noPlayableTracksMessage = stringResource(R.string.playlist_no_playable_tracks)
+    val playlistNameRequiredMessage = stringResource(R.string.playlist_name_required)
+    val playlistSaveFailedMessage = stringResource(R.string.playlist_save_failed)
     val repository = remember(dataStore) { PlaylistRepository(dataStore) }
     val playlists by repository.playlists.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
@@ -145,7 +148,7 @@ fun PlaylistsScreen(dataStore: DataStore<Preferences>) {
                                 IconButton(onClick = {
                                     val valid = playlist.tracks.filter { File(it.filePath).isFile && File(it.filePath).canRead() }
                                     if (valid.isEmpty()) {
-                                        errorMessage = context.getString(R.string.playlist_no_playable_tracks)
+                                        errorMessage = noPlayableTracksMessage
                                     } else {
                                         val songs = valid.map { Song(it.title, it.artist, null, it.filePath) }
                                         LocalPlaybackController.playQueue(context, songs, songs.first())
@@ -190,13 +193,13 @@ fun PlaylistsScreen(dataStore: DataStore<Preferences>) {
                 TextButton(onClick = {
                     val name = editorName.trim()
                     if (name.isBlank()) {
-                        errorMessage = context.getString(R.string.playlist_name_required)
+                        errorMessage = playlistNameRequiredMessage
                     } else {
                         scope.launch {
                             runCatching {
                                 if (editingPlaylistId == null) repository.createPlaylist(name)
                                 else repository.renamePlaylist(editingPlaylistId!!, name)
-                            }.onFailure { errorMessage = it.message ?: context.getString(R.string.playlist_save_failed) }
+                            }.onFailure { errorMessage = it.message ?: playlistSaveFailedMessage }
                             showPlaylistEditor = false
                         }
                     }
