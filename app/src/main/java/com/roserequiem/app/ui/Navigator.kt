@@ -62,7 +62,7 @@ fun Navigator(
     // implying you're still on a tab.
     val currentEntry by navController.currentBackStackEntryAsState()
     val showBottomBar = currentEntry?.destination?.let {
-        it.hasRoute<ScreenHome>() || it.hasRoute<ScreenDownloads>() || it.hasRoute<ScreenPlaylists>()
+        it.hasRoute<ScreenHome>() || it.hasRoute<ScreenDownloads>()
     } ?: false
 
     Scaffold(
