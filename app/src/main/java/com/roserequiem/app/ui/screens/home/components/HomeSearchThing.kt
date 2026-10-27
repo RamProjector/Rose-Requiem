@@ -37,7 +37,7 @@ fun HomeSearchThing(
         label = "",
         modifier = Modifier
             .fillMaxWidth()
-            .height(55.dp)
+            .height(64.dp)
     ) { showing ->
         if (showing) searchBar() else filterBar()
     }

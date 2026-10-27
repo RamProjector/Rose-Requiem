@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +29,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -45,6 +48,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
@@ -260,8 +264,8 @@ fun HomeScreenLoaded(
                 modifier = Modifier.padding(
                     top = 5.dp,
                     bottom = 5.dp,
-                    start = 22.dp,
-                    end = 4.dp
+                    start = 16.dp,
+                    end = 16.dp
                 ),
             ) {
                 HomeSearchThing(
@@ -356,6 +360,29 @@ fun HomeScreenLoaded(
             }
         }
 
+        if (viewModel.displaySongs.isEmpty()) {
+            val filtersActive = viewModel.userSettingsController.hideLyrics ||
+                viewModel.userSettingsController.blacklistedFolders.any { it.isNotBlank() }
+            val emptyStateKind = resolveHomeEmptyStateKind(
+                searchQuery = viewModel.searchQuery,
+                filtersActive = filtersActive,
+            )
+            val (emptyTitleRes, emptyMessageRes) = when (emptyStateKind) {
+                HomeEmptyStateKind.SEARCH -> R.string.home_no_search_results to
+                    R.string.home_no_search_results_message
+                HomeEmptyStateKind.FILTER -> R.string.home_no_filter_results to
+                    R.string.home_no_filter_results_message
+                HomeEmptyStateKind.LIBRARY -> R.string.home_empty_library_title to
+                    R.string.home_empty_library_message
+            }
+            item(key = "home_empty_state") {
+                HomeEmptyState(
+                    titleRes = emptyTitleRes,
+                    messageRes = emptyMessageRes,
+                )
+            }
+        }
+
         items(
             count = viewModel.displaySongs.size,
             key = { index -> viewModel.displaySongs[index].filePath ?: index },
@@ -412,5 +439,37 @@ fun HomeScreenLoaded(
         }
 
         item { Spacer(modifier = Modifier.height(4.dp)) }
+    }
+}
+
+@Composable
+private fun HomeEmptyState(
+    titleRes: Int,
+    messageRes: Int,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 240.dp)
+            .padding(horizontal = 28.dp, vertical = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Search,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = stringResource(titleRes),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(messageRes),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
 }
