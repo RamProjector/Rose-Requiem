@@ -41,6 +41,22 @@ import java.io.File
 import java.util.UUID
 
 
+internal enum class HomeEmptyStateKind {
+    SEARCH,
+    FILTER,
+    LIBRARY,
+}
+
+/** Search feedback takes precedence when search and filters are both active. */
+internal fun resolveHomeEmptyStateKind(
+    searchQuery: String,
+    filtersActive: Boolean,
+): HomeEmptyStateKind = when {
+    searchQuery.isNotBlank() -> HomeEmptyStateKind.SEARCH
+    filtersActive -> HomeEmptyStateKind.FILTER
+    else -> HomeEmptyStateKind.LIBRARY
+}
+
 /**
  * Resolves the visible Home source without using list emptiness as a proxy for whether
  * filters are active. An empty filtered list is a valid result and must stay empty.
