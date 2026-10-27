@@ -36,6 +36,7 @@ import com.roserequiem.app.data.remote.lyrics_providers.LyricsProviderService
 import com.roserequiem.app.services.BatchDownloadService
 import com.roserequiem.app.ui.common.animatedComposable
 import com.roserequiem.app.ui.screens.downloads.DownloadsScreen
+import com.roserequiem.app.ui.screens.categories.MusicCategoriesScreen
 import com.roserequiem.app.ui.screens.home.HomeScreen
 import com.roserequiem.app.ui.screens.home.HomeViewModel
 import com.roserequiem.app.ui.screens.init.InitScreen
@@ -104,6 +105,9 @@ fun Navigator(
                 }
                 animatedComposable<ScreenPlaylists> {
                     PlaylistsScreen(dataStore = LocalContext.current.dataStore)
+                }
+                animatedComposable<MusicCategoriesRoute> {
+                    MusicCategoriesScreen(dataStore = LocalContext.current.dataStore, onBack = { navController.popBackStack() })
                 }
 
                 animatedComposable<LyricsFetchScreen>() {
@@ -203,6 +207,9 @@ object ScreenDownloads
 
 @Serializable
 object ScreenPlaylists
+
+@Serializable
+object MusicCategoriesRoute
 
 @Serializable
 data class LyricsFetchScreen(
