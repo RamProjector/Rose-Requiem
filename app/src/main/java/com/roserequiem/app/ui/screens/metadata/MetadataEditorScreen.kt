@@ -198,7 +198,7 @@ private fun readTags(context: Context, path: String): Result<EditableTags> = run
 }
 
 private fun writeTags(context: Context, path: String, tags: EditableTags): Result<Unit> = runCatching {
-    val descriptor = getFileDescriptorFromPath(context, path, "w")
+    val descriptor = getFileDescriptorFromPath(context, path, "rw")
         ?: error("Audio file could not be opened for writing. Check file permissions.")
     descriptor.use {
         val metadata = TagLib.getMetadata(it.dup().detachFd(), false)
@@ -213,7 +213,7 @@ private fun writeTags(context: Context, path: String, tags: EditableTags): Resul
         setOrRemove("DATE", tags.year)
         setOrRemove("GENRE", tags.genre)
         setOrRemove("TRACKNUMBER", tags.trackNumber)
-        val writableDescriptor = getFileDescriptorFromPath(context, path, "w")
+        val writableDescriptor = getFileDescriptorFromPath(context, path, "rw")
             ?: error("Audio file became unavailable before saving.")
         writableDescriptor.use { writable ->
             TagLib.savePropertyMap(writable.dup().detachFd(), propertyMap = properties)
