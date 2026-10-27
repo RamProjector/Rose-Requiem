@@ -41,6 +41,7 @@ import java.util.Locale
 @Composable
 fun AudioDownloadsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
+    val flacDownloadSuccessTemplate = stringResource(R.string.flac_download_success, "__NAME__", "__LOCATION__")
     val scope = rememberCoroutineScope()
     var sourceUrl by remember { mutableStateOf("") }
     var fileName by remember { mutableStateOf("audio.flac") }
@@ -101,7 +102,7 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
                         when (result) {
                             is FlacDownloadResult.Success -> {
                                 lastSavedLocation = result.location
-                                resultMessage = context.getString(R.string.flac_download_success, result.displayName, result.location)
+                                resultMessage = flacDownloadSuccessTemplate.replace("__NAME__", result.displayName).replace("__LOCATION__", result.location)
                             }
                             is FlacDownloadResult.Failure -> resultMessage = result.message
                         }
