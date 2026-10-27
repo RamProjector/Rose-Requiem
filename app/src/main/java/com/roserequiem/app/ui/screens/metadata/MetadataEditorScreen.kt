@@ -212,9 +212,7 @@ private fun writeTags(context: Context, path: String, tags: EditableTags): Resul
         val writableDescriptor = getFileDescriptorFromPath(context, path, "w")
             ?: error("Audio file became unavailable before saving.")
         writableDescriptor.use { writable ->
-            check(TagLib.savePropertyMap(writable.dup().detachFd(), propertyMap = properties)) {
-                "The metadata library could not save these changes."
-            }
+            TagLib.savePropertyMap(writable.dup().detachFd(), propertyMap = properties)
         }
     }
     MediaScannerConnection.scanFile(context, arrayOf(path), null, null)
