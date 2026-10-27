@@ -35,7 +35,11 @@ class AuthorizedFlacDownloader(
         .build(),
     private val maxBytes: Long = MAX_DOWNLOAD_BYTES,
 ) {
-    fun download(\n        sourceUrl: String,\n        requestedName: String,\n        onProgress: (downloadedBytes: Long, totalBytes: Long?) -> Unit = { _, _ -> },\n    ): FlacDownloadResult {
+    fun download(
+        sourceUrl: String,
+        requestedName: String,
+        onProgress: (downloadedBytes: Long, totalBytes: Long?) -> Unit = { _, _ -> },
+    ): FlacDownloadResult {
         val parsed = runCatching { URI(sourceUrl.trim()) }.getOrNull()
             ?: return FlacDownloadResult.Failure("Enter a valid direct HTTPS URL.")
         if (!parsed.scheme.equals("https", ignoreCase = true) || parsed.host.isNullOrBlank()) {
