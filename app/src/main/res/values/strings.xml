@@ -244,4 +244,15 @@
     </plurals>
     <string name="fix_history">Fix history</string>
     <string name="play_song">Play song</string>
+
+    <string name="audio_downloads">Audio downloads</string>
+    <string name="flac_download_disclaimer">Download only audio files you own or are authorized to download. Paste a direct HTTPS link from a source that permits downloading; this tool does not search for music or bypass DRM, paywalls, or access controls.</string>
+    <string name="direct_https_url">Direct HTTPS URL</string>
+    <string name="direct_https_url_hint">Use a direct file link, not a webpage or streaming page.</string>
+    <string name="flac_file_name">File name (.flac)</string>
+    <string name="download_and_validate_flac">Download and validate FLAC</string>
+    <string name="flac_download_limits">Downloads are limited to 500 MB per file. The app verifies the FLAC file signature before publishing it and will not convert other formats. Android 10+ saves to Music/Rose Requiem; older Android versions use app-specific music storage.</string>
+    <string name="flac_download_progress">Downloaded %1$s of %2$s</string>
+    <string name="flac_downloaded_size">Downloaded %1$s</string>
+    <string name="flac_download_success">Saved %1$s to %2$s</string>
 </resources>

@@ -36,6 +36,7 @@ import com.roserequiem.app.ui.common.animatedComposable
 import com.roserequiem.app.ui.screens.downloads.DownloadsScreen
 import com.roserequiem.app.ui.screens.home.HomeScreen
 import com.roserequiem.app.ui.screens.home.HomeViewModel
+import com.roserequiem.app.ui.screens.audiodownloads.AudioDownloadsScreen
 import com.roserequiem.app.ui.screens.init.InitScreen
 import com.roserequiem.app.ui.screens.init.InitScreenViewModel
 import com.roserequiem.app.ui.screens.lyricsFetch.LyricsFetchScreen
@@ -97,6 +98,9 @@ fun Navigator(
                 }
                 animatedComposable<ScreenDownloads> {
                     DownloadsScreen(userSettingsController = userSettingsController)
+                }
+                animatedComposable<AudioDownloadsRoute> {
+                    AudioDownloadsScreen(onBack = { navController.popBackStack() })
                 }
 
                 animatedComposable<LyricsFetchScreen>() {
@@ -181,6 +185,9 @@ object ScreenHome
 
 @Serializable
 object ScreenDownloads
+
+@Serializable
+object AudioDownloadsRoute
 
 @Serializable
 data class LyricsFetchScreen(

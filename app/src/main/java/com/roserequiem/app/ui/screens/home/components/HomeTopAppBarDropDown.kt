@@ -32,7 +32,8 @@ fun HomeTopAppBarDropDown(
     onNavigateToSettingsSectionRequest: () -> Unit,
     selectedProvider: Providers,
     onProviderSelectRequest: (Providers) -> Unit,
-    onBatchDownloadRequest: () -> Unit
+    onBatchDownloadRequest: () -> Unit,
+    onAudioDownloadsRequest: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var expandedProviders by remember { mutableStateOf(false) }
@@ -85,6 +86,10 @@ fun HomeTopAppBarDropDown(
                         expanded = false
                         onNavigateToSettingsSectionRequest()
                     },
+                    onAudioDownloadsRequest = {
+                        expanded = false
+                        onAudioDownloadsRequest()
+                    },
                 )
         }
     }
@@ -95,6 +100,7 @@ fun HomeDropdownContent(
     onExpandProviders: () -> Unit,
     onBatchDownloadRequest: () -> Unit,
     onNavigateToSettingsSectionRequest: () -> Unit,
+    onAudioDownloadsRequest: () -> Unit,
 ) = Column {
     DropdownMenuItem(
         text = {
@@ -119,6 +125,15 @@ fun HomeDropdownContent(
             )
         },
         onClick = onBatchDownloadRequest
+    )
+    DropdownMenuItem(
+        text = {
+            Text(
+                text = stringResource(R.string.audio_downloads),
+                modifier = Modifier.padding(horizontal = 6.dp),
+            )
+        },
+        onClick = onAudioDownloadsRequest
     )
     DropdownMenuItem(
         text = {
