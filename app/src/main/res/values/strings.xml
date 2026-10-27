@@ -244,4 +244,17 @@
     </plurals>
     <string name="fix_history">Fix history</string>
     <string name="play_song">Play song</string>
+
+    <string name="metadata_editor">Metadata editor</string>
+    <string name="save_metadata">Save metadata</string>
+    <string name="track_number">Track number</string>
+    <string name="metadata_read_failed">Could not read audio metadata: %1$s</string>
+    <string name="metadata_write_failed">Could not save audio metadata: %1$s</string>
+    <string name="metadata_saved">Metadata saved. The library will refresh shortly.</string>
+    <string name="metadata_loading">Reading audio tags…</string>
+    <string name="metadata_saving">Saving audio tags…</string>
+    <string name="metadata_save_note">Only the fields shown here are changed. Other supported tags are preserved. Save writes directly to the selected audio file and may require file access permission.</string>
+    <string name="confirm_metadata_save">Save changes to this audio file?</string>
+    <string name="confirm_metadata_save_message">These changes modify the selected file's embedded tags. Make sure the file is backed up if you need to preserve the original metadata.</string>
+    <string name="edit_metadata">Edit metadata</string>
 </resources>
