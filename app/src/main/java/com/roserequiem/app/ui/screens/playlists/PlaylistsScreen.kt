@@ -53,14 +53,13 @@ import com.roserequiem.app.domain.model.PlaylistTrack
 import com.roserequiem.app.domain.model.Song
 import com.roserequiem.app.domain.model.UserPlaylist
 import com.roserequiem.app.services.LocalPlaybackController
+import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-private data class LibraryTrack(val track: PlaylistTrack, val checked: Boolean = false)
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, UnstableApi::class)
 @Composable
 fun PlaylistsScreen(dataStore: DataStore<Preferences>) {
     val context = LocalContext.current
