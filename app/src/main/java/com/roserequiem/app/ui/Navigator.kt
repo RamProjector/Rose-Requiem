@@ -43,6 +43,7 @@ import com.roserequiem.app.ui.screens.init.InitScreen
 import com.roserequiem.app.ui.screens.init.InitScreenViewModel
 import com.roserequiem.app.ui.screens.lyricsFetch.LyricsFetchScreen
 import com.roserequiem.app.ui.screens.playlists.PlaylistsScreen
+import com.roserequiem.app.ui.screens.player.NowPlayingScreen
 import com.roserequiem.app.ui.screens.lyricsFetch.LyricsFetchViewModel
 import com.roserequiem.app.ui.screens.settings.SettingsScreen
 import com.roserequiem.app.ui.screens.settings.SettingsViewModel
@@ -108,6 +109,9 @@ fun Navigator(
                 }
                 animatedComposable<MusicCategoriesRoute> {
                     MusicCategoriesScreen(dataStore = LocalContext.current.dataStore, onBack = { navController.popBackStack() })
+                }
+                animatedComposable<NowPlayingRoute> {
+                    NowPlayingScreen(onBack = { navController.popBackStack() })
                 }
 
                 animatedComposable<LyricsFetchScreen>() {
@@ -210,6 +214,9 @@ object ScreenPlaylists
 
 @Serializable
 object MusicCategoriesRoute
+
+@Serializable
+object NowPlayingRoute
 
 @Serializable
 data class LyricsFetchScreen(
