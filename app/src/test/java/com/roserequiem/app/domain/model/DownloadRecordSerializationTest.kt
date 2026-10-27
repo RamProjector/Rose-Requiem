@@ -27,6 +27,7 @@ class DownloadRecordSerializationTest {
         assertEquals(1, records.size)
         assertEquals("/music/track.flac", records.single().filePath)
         assertEquals("", records.single().batchId)
+        assertEquals(0L, records.single().batchStartedAt)
         assertEquals(DownloadStatus.SUCCESS, records.single().status)
     }
 
@@ -40,7 +41,8 @@ class DownloadRecordSerializationTest {
                 "artist": "Artist",
                 "status": "PAUSED",
                 "timestamp": 1234,
-                "batchId": "run-42"
+                "batchId": "run-42",
+                "batchStartedAt": 1200
               }
             ]
         """.trimIndent()
@@ -48,6 +50,7 @@ class DownloadRecordSerializationTest {
         val records = json.decodeFromString<List<DownloadRecord>>(currentJson)
 
         assertEquals("run-42", records.single().batchId)
+        assertEquals(1200L, records.single().batchStartedAt)
         assertEquals(DownloadStatus.PAUSED, records.single().status)
     }
 }
