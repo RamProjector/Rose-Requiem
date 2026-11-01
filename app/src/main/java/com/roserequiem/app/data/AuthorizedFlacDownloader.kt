@@ -63,8 +63,8 @@ class AuthorizedFlacDownloader(
         sourceUrl: String,
         requestedName: String,
         cancellation: FlacDownloadCancellation = FlacDownloadCancellation(),
-        onProgress: (downloadedBytes: Long, totalBytes: Long?) -> Unit = { _, _ -> },
         onSafetyScanStarted: () -> Unit = {},
+        onProgress: (downloadedBytes: Long, totalBytes: Long?) -> Unit = { _, _ -> },
     ): FlacDownloadResult {
         if (cancellation.isCancelled) return FlacDownloadResult.Cancelled
         val parsed = runCatching { URI(sourceUrl.trim()) }.getOrNull()
