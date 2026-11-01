@@ -6,6 +6,7 @@ import android.content.Context
 import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.ParcelFileDescriptor
+import androidx.annotation.RequiresApi
 import com.kyant.taglib.Picture
 import com.kyant.taglib.TagLib
 import java.io.File
@@ -132,16 +133,18 @@ object AudioMetadataRepository {
         val descriptor = directDescriptor ?: try {
             getFileDescriptorFromPath(context, filePath, mode)
         } catch (securityException: SecurityException) {
-            val recoverable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                securityException as? RecoverableSecurityException
-            } else null
-            if (recoverable != null) {
-                throw AudioMetadataPermissionException(recoverable.userAction.actionIntent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val recoverable = securityException as? RecoverableSecurityException
+                if (recoverable != null) throw toPermissionException(recoverable)
             }
             throw securityException
         } ?: error("This track is no longer available in the media library.")
         return descriptor.use(block)
     }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun toPermissionException(error: RecoverableSecurityException) =
+        AudioMetadataPermissionException(error.userAction.actionIntent)
 
     private fun snapshotFrom(
         properties: Map<String, Array<String>>,
@@ -161,7 +164,7 @@ internal fun buildEditedPropertyMap(
     edits: Map<String, String>,
 ): HashMap<String, Array<String>> {
     val updated = HashMap<String, Array<String>>().apply { putAll(existing) }
-    edits.forEach { (rawKey, rawValue) ->
+    for ((rawKey, rawValue) in edits) {
         val requestedKey = rawKey.trim()
         require(requestedKey.isNotEmpty() && requestedKey.length <= 255 &&
             requestedKey.none { it == '\n' || it == '\r' || it == '\u0000' }) {
@@ -202,7 +205,9 @@ internal fun editFrontCover(
 }
 
 private fun copyProperties(properties: Map<String, Array<String>>) =
-    HashMap<String, Array<String>>().apply { properties.forEach { (key, values) -> put(key, values.copyOf()) } }
+    HashMap<String, Array<String>>().apply {
+        for ((key, values) in properties) put(key, values.copyOf())
+    }
 
 private fun propertyMapsEqual(left: Map<String, Array<String>>, right: Map<String, Array<String>>): Boolean =
     left.keys == right.keys && left.all { (key, values) -> right[key]?.contentEquals(values) == true }

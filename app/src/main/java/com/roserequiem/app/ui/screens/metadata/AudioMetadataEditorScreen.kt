@@ -74,6 +74,13 @@ fun AudioMetadataEditorScreen(
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
+    val permissionGrantedMessage = stringResource(R.string.metadata_permission_granted_retry)
+    val permissionDeniedMessage = stringResource(R.string.metadata_permission_denied)
+    val metadataLoadFailedMessage = stringResource(R.string.metadata_load_failed)
+    val metadataImageInvalidMessage = stringResource(R.string.metadata_image_invalid)
+    val metadataSavedMessage = stringResource(R.string.metadata_saved)
+    val metadataSaveFailedMessage = stringResource(R.string.metadata_save_failed)
+    val invalidTagMessage = stringResource(R.string.metadata_tag_invalid_or_exists)
     val scope = rememberCoroutineScope()
     var snapshot by remember(filePath) { mutableStateOf<AudioMetadataSnapshot?>(null) }
     var tagKeys by remember(filePath) { mutableStateOf(commonTagKeys) }
@@ -92,9 +99,9 @@ fun AudioMetadataEditorScreen(
         ActivityResultContracts.StartIntentSenderForResult(),
     ) { result ->
         message = if (result.resultCode == Activity.RESULT_OK) {
-            context.getString(R.string.metadata_permission_granted_retry)
+            permissionGrantedMessage
         } else {
-            context.getString(R.string.metadata_permission_denied)
+            permissionDeniedMessage
         }
     }
 
@@ -110,7 +117,7 @@ fun AudioMetadataEditorScreen(
                 withContext(Dispatchers.IO) { decodeArtworkPreview(bytes) }
             }
         } catch (error: Exception) {
-            message = error.message ?: context.getString(R.string.metadata_load_failed)
+            message = error.message ?: metadataLoadFailedMessage
         } finally {
             isLoading = false
         }
@@ -125,7 +132,7 @@ fun AudioMetadataEditorScreen(
                     previewBitmap = selected.preview
                     pendingImageError = null
                 } catch (error: Exception) {
-                    pendingImageError = error.message ?: context.getString(R.string.metadata_image_invalid)
+                    pendingImageError = error.message ?: metadataImageInvalidMessage
                 }
             }
         }
@@ -218,14 +225,14 @@ fun AudioMetadataEditorScreen(
                                 previewBitmap = updated.frontCover?.data?.let { bytes ->
                                     withContext(Dispatchers.IO) { decodeArtworkPreview(bytes) }
                                 }
-                                message = context.getString(R.string.metadata_saved)
+                                message = metadataSavedMessage
                             } catch (error: Exception) {
                                 if (error is AudioMetadataPermissionException) {
                                     permissionLauncher.launch(
                                         IntentSenderRequest.Builder(error.permissionRequest.intentSender).build()
                                     )
                                 } else {
-                                    message = error.message ?: context.getString(R.string.metadata_save_failed)
+                                    message = error.message ?: metadataSaveFailedMessage
                                 }
                             } finally {
                                 isSaving = false
@@ -275,7 +282,7 @@ fun AudioMetadataEditorScreen(
                         newTagValue = ""
                         showAddTagDialog = false
                     } else {
-                        pendingImageError = context.getString(R.string.metadata_tag_invalid_or_exists)
+                        pendingImageError = invalidTagMessage
                     }
                 }) { Text(stringResource(R.string.metadata_add_tag)) }
             },
