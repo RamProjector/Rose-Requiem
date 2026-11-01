@@ -46,7 +46,7 @@ class FlacDownloadCancellation {
 /**
  * Downloads an authorized direct FLAC URL. This does not search for copyrighted files,
  * bypass access controls, or convert other audio formats. A response is only published
- * after its FLAC file signature is verified.
+ * after its FLAC signature, metadata structure, and offline safety screening are checked.
  */
 class AuthorizedFlacDownloader(
     private val context: Context,
@@ -64,6 +64,7 @@ class AuthorizedFlacDownloader(
         requestedName: String,
         cancellation: FlacDownloadCancellation = FlacDownloadCancellation(),
         onProgress: (downloadedBytes: Long, totalBytes: Long?) -> Unit = { _, _ -> },
+        onSafetyScanStarted: () -> Unit = {},
     ): FlacDownloadResult {
         if (cancellation.isCancelled) return FlacDownloadResult.Cancelled
         val parsed = runCatching { URI(sourceUrl.trim()) }.getOrNull()
@@ -127,6 +128,19 @@ class AuthorizedFlacDownloader(
                 }.not()
             ) {
                 return FlacDownloadResult.Failure("The downloaded content is not a FLAC file. Nothing was saved.")
+            }
+
+            if (cancellation.isCancelled) return FlacDownloadResult.Cancelled
+            onSafetyScanStarted()
+            when (val scan = DownloadedAudioSafetyScanner.scan(temp) { cancellation.isCancelled }) {
+                AudioSafetyScanResult.Passed -> Unit
+                is AudioSafetyScanResult.ThreatDetected -> return FlacDownloadResult.Failure(
+                    "The offline safety scan detected ${scan.signatureName}. The download was blocked and nothing was saved."
+                )
+                is AudioSafetyScanResult.Rejected -> return FlacDownloadResult.Failure(
+                    "The offline safety scan rejected this file: ${scan.reason} Nothing was saved."
+                )
+                AudioSafetyScanResult.Cancelled -> return FlacDownloadResult.Cancelled
             }
 
             return publish(temp, displayName, cancellation)

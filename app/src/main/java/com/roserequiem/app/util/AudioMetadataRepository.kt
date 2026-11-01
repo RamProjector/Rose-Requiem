@@ -112,7 +112,7 @@ object AudioMetadataRepository {
         runCatching {
             MediaScannerConnection.scanFile(context, arrayOf(filePath), null, null)
         }
-        saved
+        return saved
     }
 
     private fun withDescriptor(

@@ -49,6 +49,7 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
     var sourceUrl by remember { mutableStateOf("") }
     var fileName by remember { mutableStateOf("audio.flac") }
     var downloading by remember { mutableStateOf(false) }
+    var scanningSafety by remember { mutableStateOf(false) }
     var downloadedBytes by remember { mutableLongStateOf(0L) }
     var totalBytes by remember { mutableStateOf<Long?>(null) }
     var resultMessage by remember { mutableStateOf<String?>(null) }
@@ -95,6 +96,7 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
                 enabled = !downloading && sourceUrl.isNotBlank() && fileName.isNotBlank(),
                 onClick = {
                     downloading = true
+                    scanningSafety = false
                     downloadedBytes = 0L
                     totalBytes = null
                     resultMessage = null
@@ -107,6 +109,7 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
                                     sourceUrl = sourceUrl,
                                     requestedName = fileName,
                                     cancellation = cancellation,
+                                    onSafetyScanStarted = { progressHandler.post { scanningSafety = true } },
                                 ) { current, total ->
                                     progressHandler.post {
                                         downloadedBytes = current
@@ -123,6 +126,7 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
                             }
                         } finally {
                             downloading = false
+                            scanningSafety = false
                             activeCancellation = null
                         }
                     }
@@ -133,7 +137,10 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
                 Text(stringResource(R.string.download_and_validate_flac), modifier = Modifier.padding(start = 8.dp))
             }
             if (downloading) {
-                if (totalBytes != null && totalBytes!! > 0L) {
+                if (scanningSafety) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Text(stringResource(R.string.flac_safety_scan_running))
+                } else if (totalBytes != null && totalBytes!! > 0L) {
                     LinearProgressIndicator(
                         progress = { (downloadedBytes.toFloat() / totalBytes!!.toFloat()).coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth()
@@ -151,6 +158,7 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
                 }
             }
             Text(stringResource(R.string.flac_download_limits), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.flac_safety_scan_disclosure), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
         }
     }
 

@@ -280,10 +280,12 @@
     <string name="direct_https_url">Direct HTTPS URL</string>
     <string name="direct_https_url_hint">Use a direct file link, not a webpage or streaming page.</string>
     <string name="flac_file_name">File name (.flac)</string>
-    <string name="download_and_validate_flac">Download and validate FLAC</string>
+    <string name="download_and_validate_flac">Scan and download FLAC</string>
     <string name="flac_download_limits">Downloads are limited to 500 MB per file. The app verifies the FLAC file signature before publishing it and will not convert other formats. Downloads are saved to Music/Rose Requiem.</string>
     <string name="flac_download_progress">Downloaded %1$s of %2$s</string>
     <string name="flac_downloaded_size">Downloaded %1$s</string>
     <string name="flac_download_success">Saved %1$s to %2$s</string>
     <string name="flac_download_cancelled">Download cancelled. No file was saved.</string>
+    <string name="flac_safety_scan_running">Checking the FLAC container and known test signature locally…</string>
+    <string name="flac_safety_scan_disclosure">Offline safety check: validates FLAC metadata and detects the EICAR antivirus test file. Audio is not uploaded. This is not full antivirus and cannot guarantee a file is malware-free.</string>
 </resources>
