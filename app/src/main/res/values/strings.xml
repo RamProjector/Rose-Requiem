@@ -244,6 +244,22 @@
     </plurals>
     <string name="fix_history">Fix history</string>
     <string name="play_song">Play song</string>
+    <string name="metadata_editor_title">Edit audio metadata</string>
+    <string name="metadata_artwork">Embedded album art</string>
+    <string name="metadata_choose_cover">Choose cover</string>
+    <string name="metadata_remove_cover">Remove cover</string>
+    <string name="metadata_tags">Audio tags (ID3v2, Vorbis comments, and other TagLib properties)</string>
+    <string name="metadata_tags_note">TagLib-exposed text tags can be edited or added; unrecognized ID3v2 frames are left intact. Put multiple values on separate lines.</string>
+    <string name="metadata_add_tag">Add custom tag</string>
+    <string name="metadata_tag_name">Tag name</string>
+    <string name="metadata_tag_value">Tag value</string>
+    <string name="metadata_tag_invalid_or_exists">Enter a valid, unique tag name.</string>
+    <string name="metadata_image_invalid">Choose a valid JPEG, PNG, or WebP image.</string>
+    <string name="metadata_no_cover">No embedded cover art</string>
+    <string name="metadata_load_failed">Could not read this audio file’s metadata.</string>
+    <string name="metadata_save_failed">Could not save the audio metadata.</string>
+    <string name="metadata_permission_granted_retry">Permission granted. Tap Save again to apply the changes.</string>
+    <string name="metadata_permission_denied">Permission was not granted; the audio file was not changed.</string>
 
     <string name="genre">Genre</string>
     <string name="metadata_editor">Metadata editor</string>
@@ -265,8 +281,9 @@
     <string name="direct_https_url_hint">Use a direct file link, not a webpage or streaming page.</string>
     <string name="flac_file_name">File name (.flac)</string>
     <string name="download_and_validate_flac">Download and validate FLAC</string>
-    <string name="flac_download_limits">Downloads are limited to 500 MB per file. The app verifies the FLAC file signature before publishing it and will not convert other formats. Android 10+ saves to Music/Rose Requiem; older Android versions use app-specific music storage.</string>
+    <string name="flac_download_limits">Downloads are limited to 500 MB per file. The app verifies the FLAC file signature before publishing it and will not convert other formats. Downloads are saved to Music/Rose Requiem.</string>
     <string name="flac_download_progress">Downloaded %1$s of %2$s</string>
     <string name="flac_downloaded_size">Downloaded %1$s</string>
     <string name="flac_download_success">Saved %1$s to %2$s</string>
+    <string name="flac_download_cancelled">Download cancelled. No file was saved.</string>
 </resources>

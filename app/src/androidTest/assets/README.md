@@ -1,0 +1,1 @@
+These synthetic fixtures are generated locally with FFmpeg from short sine-wave audio and a solid-color image. They contain no commercial music and exist only to exercise TagLib ID3v2.3/FLAC metadata and embedded-cover round trips in instrumentation tests.

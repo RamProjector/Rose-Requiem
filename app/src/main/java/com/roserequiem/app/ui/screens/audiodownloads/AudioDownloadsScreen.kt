@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.roserequiem.app.R
 import com.roserequiem.app.data.AuthorizedFlacDownloader
+import com.roserequiem.app.data.FlacDownloadCancellation
 import com.roserequiem.app.data.FlacDownloadResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,7 +52,12 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
     var downloadedBytes by remember { mutableLongStateOf(0L) }
     var totalBytes by remember { mutableStateOf<Long?>(null) }
     var resultMessage by remember { mutableStateOf<String?>(null) }
+    var activeCancellation by remember { mutableStateOf<FlacDownloadCancellation?>(null) }
     val progressHandler = remember { Handler(Looper.getMainLooper()) }
+
+    DisposableEffect(activeCancellation) {
+        onDispose { activeCancellation?.cancel() }
+    }
 
     Scaffold(
         topBar = {
@@ -91,21 +98,32 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
                     downloadedBytes = 0L
                     totalBytes = null
                     resultMessage = null
+                    val cancellation = FlacDownloadCancellation()
+                    activeCancellation = cancellation
                     scope.launch {
-                        val result = withContext(Dispatchers.IO) {
-                            AuthorizedFlacDownloader(context).download(sourceUrl, fileName) { current, total ->
-                                progressHandler.post {
-                                    downloadedBytes = current
-                                    totalBytes = total
+                        try {
+                            val result = withContext(Dispatchers.IO) {
+                                AuthorizedFlacDownloader(context).download(
+                                    sourceUrl = sourceUrl,
+                                    requestedName = fileName,
+                                    cancellation = cancellation,
+                                ) { current, total ->
+                                    progressHandler.post {
+                                        downloadedBytes = current
+                                        totalBytes = total
+                                    }
                                 }
                             }
-                        }
-                        downloading = false
-                        when (result) {
-                            is FlacDownloadResult.Success -> {
-                                resultMessage = flacDownloadSuccessTemplate.replace("__NAME__", result.displayName).replace("__LOCATION__", result.location)
+                            when (result) {
+                                is FlacDownloadResult.Success -> {
+                                    resultMessage = flacDownloadSuccessTemplate.replace("__NAME__", result.displayName).replace("__LOCATION__", result.location)
+                                }
+                                is FlacDownloadResult.Failure -> resultMessage = result.message
+                                FlacDownloadResult.Cancelled -> resultMessage = context.getString(R.string.flac_download_cancelled)
                             }
-                            is FlacDownloadResult.Failure -> resultMessage = result.message
+                        } finally {
+                            downloading = false
+                            activeCancellation = null
                         }
                     }
                 },
@@ -124,6 +142,12 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
                 } else {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                     Text(stringResource(R.string.flac_downloaded_size, formatBytes(downloadedBytes)))
+                }
+                TextButton(
+                    onClick = { activeCancellation?.cancel() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
             Text(stringResource(R.string.flac_download_limits), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)

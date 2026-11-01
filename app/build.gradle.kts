@@ -24,6 +24,7 @@ android {
         targetSdk = 36
         versionCode = 434
         versionName = "4.4.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -82,6 +83,8 @@ kotlin {
 
 dependencies {
     testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.activity.compose)

@@ -36,12 +36,12 @@ import com.roserequiem.app.ui.common.animatedComposable
 import com.roserequiem.app.ui.screens.downloads.DownloadsScreen
 import com.roserequiem.app.ui.screens.home.HomeScreen
 import com.roserequiem.app.ui.screens.home.HomeViewModel
-import com.roserequiem.app.ui.screens.metadata.MetadataEditorScreen
 import com.roserequiem.app.ui.screens.audiodownloads.AudioDownloadsScreen
 import com.roserequiem.app.ui.screens.init.InitScreen
 import com.roserequiem.app.ui.screens.init.InitScreenViewModel
 import com.roserequiem.app.ui.screens.lyricsFetch.LyricsFetchScreen
 import com.roserequiem.app.ui.screens.lyricsFetch.LyricsFetchViewModel
+import com.roserequiem.app.ui.screens.metadata.AudioMetadataEditorScreen
 import com.roserequiem.app.ui.screens.settings.SettingsScreen
 import com.roserequiem.app.ui.screens.settings.SettingsViewModel
 
@@ -105,7 +105,10 @@ fun Navigator(
                 }
                 animatedComposable<MetadataEditorRoute> { entry ->
                     val args = entry.toRoute<MetadataEditorRoute>()
-                    MetadataEditorScreen(filePath = args.filePath, onBack = { navController.popBackStack() })
+                    AudioMetadataEditorScreen(
+                        filePath = args.filePath,
+                        onBack = { navController.popBackStack() },
+                    )
                 }
 
                 animatedComposable<LyricsFetchScreen>() {

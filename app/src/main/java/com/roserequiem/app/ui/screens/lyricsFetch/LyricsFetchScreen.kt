@@ -23,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.roserequiem.app.R
 import com.roserequiem.app.ui.components.ProvidersDropdownMenu
+import com.roserequiem.app.ui.MetadataEditorRoute
 import com.roserequiem.app.ui.screens.lyricsFetch.components.CloudProviderTitle
 import com.roserequiem.app.ui.screens.lyricsFetch.components.FailedDialogue
 import com.roserequiem.app.ui.screens.lyricsFetch.components.LocalSongContent
@@ -110,6 +112,15 @@ fun SharedTransitionScope.LyricsFetchScreen(
                     )
                 },
                 actions = {
+                    val editableFilePath = viewModel.source?.filePath
+                        ?.takeIf { it.isNotBlank() && !it.endsWith(".nowplaying") }
+                    if (editableFilePath != null) {
+                        TextButton(onClick = {
+                            navController.navigate(MetadataEditorRoute(editableFilePath))
+                        }) {
+                            Text(stringResource(R.string.edit_metadata))
+                        }
+                    }
                     IconButton(onClick = { expandedProviders = !expandedProviders }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
