@@ -56,6 +56,7 @@ import com.roserequiem.app.R
 import com.roserequiem.app.domain.model.Song
 import com.roserequiem.app.ui.LyricsFetchScreen
 import com.roserequiem.app.ui.MetadataEditorRoute
+import com.roserequiem.app.ui.AudioDownloadsRoute
 import com.roserequiem.app.ui.ScreenSettings
 import com.roserequiem.app.ui.screens.home.components.BatchDownloadLyrics
 import com.roserequiem.app.ui.screens.home.components.FilterAndSongCount
@@ -122,6 +123,7 @@ fun HomeScreen(
                     onNavigateToSettingsSectionRequest = { navController.navigate(ScreenSettings) },
                     onProviderSelectRequest = viewModel.userSettingsController::updateSelectedProviders,
                     onBatchDownloadRequest = { isBatchDownload = true },
+                    onAudioDownloadsRequest = { navController.navigate(AudioDownloadsRoute) },
                     selectedProvider = viewModel.userSettingsController.selectedProvider,
                     onSelectAllSongsRequest = viewModel::selectAllDisplayingSongs,
                     onInvertSongSelectionRequest = viewModel::invertSongSelection,

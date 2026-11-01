@@ -39,6 +39,7 @@ fun HomeAppBar(
     onNavigateToSettingsSectionRequest: () -> Unit,
     onProviderSelectRequest: (Providers) -> Unit,
     onBatchDownloadRequest: () -> Unit,
+    onAudioDownloadsRequest: () -> Unit,
     onSelectAllSongsRequest: () -> Unit,
     onInvertSongSelectionRequest: () -> Unit,
     selectedFilePath: String?,
@@ -135,6 +136,7 @@ fun HomeAppBar(
                     selectedProvider = selectedProvider,
                     onProviderSelectRequest = onProviderSelectRequest,
                     onBatchDownloadRequest = onBatchDownloadRequest,
+                    onAudioDownloadsRequest = onAudioDownloadsRequest,
                 )
             }
         },

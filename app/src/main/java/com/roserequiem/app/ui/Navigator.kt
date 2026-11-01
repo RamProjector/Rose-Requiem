@@ -37,6 +37,7 @@ import com.roserequiem.app.ui.screens.downloads.DownloadsScreen
 import com.roserequiem.app.ui.screens.home.HomeScreen
 import com.roserequiem.app.ui.screens.home.HomeViewModel
 import com.roserequiem.app.ui.screens.metadata.MetadataEditorScreen
+import com.roserequiem.app.ui.screens.audiodownloads.AudioDownloadsScreen
 import com.roserequiem.app.ui.screens.init.InitScreen
 import com.roserequiem.app.ui.screens.init.InitScreenViewModel
 import com.roserequiem.app.ui.screens.lyricsFetch.LyricsFetchScreen
@@ -98,6 +99,9 @@ fun Navigator(
                 }
                 animatedComposable<ScreenDownloads> {
                     DownloadsScreen(userSettingsController = userSettingsController)
+                }
+                animatedComposable<AudioDownloadsRoute> {
+                    AudioDownloadsScreen(onBack = { navController.popBackStack() })
                 }
                 animatedComposable<MetadataEditorRoute> { entry ->
                     val args = entry.toRoute<MetadataEditorRoute>()
@@ -189,6 +193,9 @@ object ScreenDownloads
 
 @Serializable
 data class MetadataEditorRoute(val filePath: String)
+
+@Serializable
+object AudioDownloadsRoute
 
 @Serializable
 data class LyricsFetchScreen(
