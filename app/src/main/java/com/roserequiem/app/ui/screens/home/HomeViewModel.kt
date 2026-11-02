@@ -81,6 +81,20 @@ class HomeViewModel(
     private val lyricsProviderService: LyricsProviderService
 ) : ViewModel() {
     var cachedSongs: List<Song>? = null
+        private set
+
+    // A refresh can be triggered by sort changes and MediaStore notifications close
+    // together. Only the newest request is allowed to publish its result.
+    private var scanGeneration = 0L
+    private var scanJob: Job? = null
+
+    /** Invalidates every cache derived from the MediaStore library. */
+    fun invalidateMusicLibraryCache() {
+        cachedSongs = null
+        cachedFolders = null
+        scanGeneration++
+        scanJob?.cancel()
+    }
 
     // SnapshotStateMap, not SnapshotStateList: reading `selectedSongs.contains(path)` (or
     // `containsKey`) inside a row only subscribes that row to changes for that one key.
@@ -166,11 +180,23 @@ class HomeViewModel(
             }
     }
 
-    fun updateAllSongs(context: Context, sortBy: SortValues, sortOrder: SortOrders) = viewModelScope.launch(Dispatchers.IO) {
-        allSongs = getAllSongs(context, sortBy, sortOrder)
-        // Read active-session metadata and write the transient artwork snapshot off the main thread.
-        // Run this after publishing the song list so matching the current track cannot race `allSongs`.
-        updatePlayingSongInfo(context)
+    fun updateAllSongs(context: Context, sortBy: SortValues, sortOrder: SortOrders) {
+        scanJob?.cancel()
+        val generation = ++scanGeneration
+        scanJob = viewModelScope.launch(Dispatchers.IO) {
+            val songs = getAllSongs(context, sortBy, sortOrder)
+            // A canceled/older scan may finish a blocking MediaStore query after a newer
+            // refresh has started. Never let that older result overwrite the UI/cache.
+            ensureActive()
+            if (generation != scanGeneration) return@launch
+
+            cachedSongs = songs
+            cachedFolders = null
+            allSongs = songs
+            filterSongs()
+            // Read active-session metadata after publishing the winning scan.
+            updatePlayingSongInfo(context)
+        }
     }
 
     /**
@@ -230,10 +256,8 @@ class HomeViewModel(
                     songs.add(song)
                 }
             }
-            cursor?.close()
-            cachedSongs = songs
-            viewModelScope.launch { filterSongs() }
-            cachedSongs!!
+            // cursor.use above closes the cursor on success and on exceptions.
+            songs
         }
     }
 

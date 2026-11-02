@@ -93,7 +93,7 @@ fun HomeScreen(
     val context = LocalContext.current
 
     LaunchedEffect(viewModel.userSettingsController.sortBy to viewModel.userSettingsController.sortOrder) {
-        viewModel.cachedSongs = null
+        viewModel.invalidateMusicLibraryCache()
         viewModel.updateAllSongs(context, viewModel.userSettingsController.sortBy, viewModel.userSettingsController.sortOrder)
     }
 
@@ -212,7 +212,7 @@ fun HomeScreenLoaded(
     DisposableEffect(Unit) {
         val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {
-                viewModel.cachedSongs = null
+                viewModel.invalidateMusicLibraryCache()
                 viewModel.updateAllSongs(
                     context,
                     viewModel.userSettingsController.sortBy,
