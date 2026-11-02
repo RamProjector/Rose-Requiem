@@ -29,6 +29,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -171,7 +172,12 @@ fun DownloadsScreen(
             when {
                 !isLoaded -> LoadingState()
                 records.isEmpty() -> EmptyState(textRes = R.string.no_download_history)
-                visibleBatches.isEmpty() -> EmptyState(textRes = R.string.no_download_history_match)
+                visibleBatches.isEmpty() -> EmptyFilteredState(
+                    onClearFilters = {
+                        viewModel.onSearchQueryChange("")
+                        viewModel.onStatusFilterChange(null)
+                    },
+                )
                 else -> LazyColumn(state = listState) {
                     // Every batch's rows are emitted as their own lazy items -- including
                     // an expanded batch's children -- rather than composed eagerly inside
@@ -339,6 +345,35 @@ private fun DownloadsSelectionTopBar(
 private fun LoadingState() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun EmptyFilteredState(onClearFilters: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Download,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(40.dp),
+            )
+            Text(
+                text = stringResource(id = R.string.no_download_history_match),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+            )
+            TextButton(onClick = onClearFilters) {
+                Text(stringResource(R.string.clear_download_filters))
+            }
+        }
     }
 }
 
