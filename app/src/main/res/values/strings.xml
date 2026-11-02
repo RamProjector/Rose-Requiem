@@ -4,6 +4,7 @@
     <string name="search_downloads">Search download history</string>
     <string name="no_download_history">No downloads yet</string>
     <string name="no_download_history_match">No downloads match this filter</string>
+    <string name="clear_download_filters">Clear search and filters</string>
     <string name="clear_finished_downloads">Clear finished</string>
     <string name="status_all">All</string>
     <string name="status_queued">Queued</string>
