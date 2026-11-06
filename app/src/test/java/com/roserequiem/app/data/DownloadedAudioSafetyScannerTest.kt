@@ -8,7 +8,44 @@ import java.io.File
 class DownloadedAudioSafetyScannerTest {
     @Test
     fun passesWellFormedFlacContainer() = withTempAudio(validFlac(byteArrayOf(0xff.toByte(), 0xf8.toByte(), 0x00, 0x00))) { file ->
-        assertEquals(AudioSafetyScanResult.Passed, DownloadedAudioSafetyScanner.scan(file))
+        assertEquals(
+            AudioSafetyScanResult.Passed,
+            DownloadedAudioSafetyScanner.scan(file, yaraScan = { YaraXScanResult.Clean }),
+        )
+    }
+
+    @Test
+    fun blocksYaraRuleMatches() = withTempAudio(validFlac(byteArrayOf(0xff.toByte(), 0xf8.toByte(), 0x00, 0x00))) { file ->
+        assertEquals(
+            AudioSafetyScanResult.ThreatDetected("YARA-X: test::KnownThreat"),
+            DownloadedAudioSafetyScanner.scan(
+                file,
+                yaraScan = { YaraXScanResult.ThreatsFound(listOf("test::KnownThreat")) },
+            ),
+        )
+    }
+
+    @Test
+    fun failsClosedWhenYaraEngineIsUnavailable() = withTempAudio(validFlac(byteArrayOf(0xff.toByte(), 0xf8.toByte(), 0x00, 0x00))) { file ->
+        val result = DownloadedAudioSafetyScanner.scan(
+            file,
+            yaraScan = { YaraXScanResult.Unavailable("engine unavailable") },
+        )
+        assertEquals(AudioSafetyScanResult.Rejected("engine unavailable"), result)
+    }
+
+    @Test
+    fun cancellationDuringYaraScanPreventsPassingTheFile() = withTempAudio(validFlac(byteArrayOf(0xff.toByte(), 0xf8.toByte(), 0x00, 0x00))) { file ->
+        var cancelled = false
+        val result = DownloadedAudioSafetyScanner.scan(
+            file,
+            isCancelled = { cancelled },
+            yaraScan = {
+                cancelled = true
+                YaraXScanResult.Clean
+            },
+        )
+        assertEquals(AudioSafetyScanResult.Cancelled, result)
     }
 
     @Test

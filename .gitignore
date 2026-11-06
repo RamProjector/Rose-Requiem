@@ -20,3 +20,6 @@ local.properties
 *.keystore
 *.jks
 release.keystore
+
+# Rust build output for the YARA-X Android library.
+/native/yara_x/target/

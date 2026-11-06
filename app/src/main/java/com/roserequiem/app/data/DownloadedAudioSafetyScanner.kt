@@ -3,7 +3,7 @@ package com.roserequiem.app.data
 import java.io.File
 import java.io.RandomAccessFile
 
-/** Result of the app's limited, offline download-safety screening. */
+/** Result of the app's offline download-safety screening. */
 sealed interface AudioSafetyScanResult {
     data object Passed : AudioSafetyScanResult
     data class ThreatDetected(val signatureName: String) : AudioSafetyScanResult
@@ -14,9 +14,9 @@ sealed interface AudioSafetyScanResult {
 /**
  * Performs local pre-publication checks on a downloaded FLAC file.
  *
- * This is not a general antivirus engine. It validates the FLAC metadata structure and
- * looks for the standard harmless EICAR antivirus test string. It does not identify unknown
- * malware, and a Passed verdict must not be presented as proof that a file is malware-free.
+ * This is not a general antivirus engine. It validates the FLAC metadata structure, checks
+ * the standard harmless EICAR antivirus test string, and runs bundled YARA-X signatures.
+ * It cannot identify every threat, and a Passed verdict is not proof that a file is malware-free.
  */
 object DownloadedAudioSafetyScanner {
     private const val MAX_METADATA_BLOCKS = 1024
@@ -25,7 +25,11 @@ object DownloadedAudioSafetyScanner {
     private val eicar = "X5O!P%@AP[4\\PZX54(P^)7CC)7}\$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!\$H+H*"
         .toByteArray(Charsets.US_ASCII)
 
-    fun scan(file: File, isCancelled: () -> Boolean = { false }): AudioSafetyScanResult {
+    internal fun scan(
+        file: File,
+        isCancelled: () -> Boolean = { false },
+        yaraScan: (String) -> YaraXScanResult = YaraXNativeScanner::scanFile,
+    ): AudioSafetyScanResult {
         if (isCancelled()) return AudioSafetyScanResult.Cancelled
         if (!file.isFile || !file.canRead()) {
             return AudioSafetyScanResult.Rejected("The downloaded file could not be read for safety checks.")
@@ -37,7 +41,25 @@ object DownloadedAudioSafetyScanner {
                 val structureFailure = validateFlacMetadata(input, length, isCancelled)
                 if (structureFailure != null) return structureFailure
                 if (isCancelled()) return AudioSafetyScanResult.Cancelled
-                findEicar(input, length, isCancelled)
+                when (val eicarResult = findEicar(input, length, isCancelled)) {
+                    AudioSafetyScanResult.Passed -> {
+                        if (isCancelled()) return AudioSafetyScanResult.Cancelled
+                        val yaraResult = yaraScan(file.absolutePath)
+                        if (isCancelled()) return AudioSafetyScanResult.Cancelled
+                        when (yaraResult) {
+                            YaraXScanResult.Clean -> {
+                                AudioSafetyScanResult.Passed
+                            }
+                            is YaraXScanResult.ThreatsFound -> AudioSafetyScanResult.ThreatDetected(
+                                "YARA-X: ${yaraResult.ruleNames.joinToString().take(400)}"
+                            )
+                            is YaraXScanResult.Unavailable -> AudioSafetyScanResult.Rejected(
+                                yaraResult.reason
+                            )
+                        }
+                    }
+                    else -> eicarResult
+                }
             }
         } catch (_: DownloadCancelledException) {
             AudioSafetyScanResult.Cancelled

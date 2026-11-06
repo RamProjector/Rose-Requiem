@@ -12,6 +12,7 @@ plugins {
 android {
     namespace = "com.roserequiem.app"
     compileSdk = 36
+    ndkVersion = "27.2.12479018"
 
     defaultConfig {
         applicationId = "com.roserequiem.app"
@@ -79,6 +80,36 @@ kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
     }
+}
+
+val yaraXNativeOutput = layout.buildDirectory.dir("generated/yaraX/jniLibs")
+android.sourceSets.getByName("main").jniLibs.srcDir(yaraXNativeOutput)
+
+val buildYaraXNative by tasks.registering(Exec::class) {
+    val nativeModule = rootProject.file("native/yara_x")
+    inputs.files(rootProject.fileTree(nativeModule) { exclude("target/**") })
+    outputs.dir(yaraXNativeOutput)
+    workingDir(rootProject.projectDir)
+    environment("CARGO_NDK_PLATFORM", "23")
+    doFirst {
+        val outputDirectory = yaraXNativeOutput.get().asFile
+        outputDirectory.deleteRecursively()
+        outputDirectory.mkdirs()
+        commandLine(
+            "cargo", "ndk",
+            "-t", "armeabi-v7a",
+            "-t", "arm64-v8a",
+            "-t", "x86",
+            "-t", "x86_64",
+            "-o", outputDirectory.absolutePath,
+            "build", "--release",
+            "--manifest-path", nativeModule.resolve("Cargo.toml").absolutePath,
+        )
+    }
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(buildYaraXNative)
 }
 
 dependencies {
