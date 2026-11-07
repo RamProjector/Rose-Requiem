@@ -1,0 +1,21 @@
+[package]
+name = "rose-yara-x"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+publish = false
+
+[lib]
+name = "rose_yara_x"
+crate-type = ["cdylib"]
+
+[dependencies]
+jni = "=0.21.1"
+# The pinned rules import only `pe` and `elf`; omit unused default modules such as
+# archive, Chromium, Cuckoo, .NET, and VirusTotal parsing support.
+yara-x = { version = "=1.22.1", default-features = false, features = ["constant-folding", "exact-atoms", "fast-regexp", "pe-module", "elf-module", "pulley"] }
+
+[profile.release]
+strip = "symbols"
+lto = false
+codegen-units = 8

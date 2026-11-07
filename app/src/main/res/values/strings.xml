@@ -245,15 +245,53 @@
     </plurals>
     <string name="fix_history">Fix history</string>
     <string name="play_song">Play song</string>
+    <string name="metadata_editor_title">Edit audio metadata</string>
+    <string name="metadata_artwork">Embedded album art</string>
+    <string name="metadata_choose_cover">Choose cover</string>
+    <string name="metadata_remove_cover">Remove cover</string>
+    <string name="metadata_tags">Audio tags (ID3v2, Vorbis comments, and other TagLib properties)</string>
+    <string name="metadata_tags_note">TagLib-exposed text tags can be edited or added; unrecognized ID3v2 frames are left intact. Put multiple values on separate lines.</string>
+    <string name="metadata_add_tag">Add custom tag</string>
+    <string name="metadata_tag_name">Tag name</string>
+    <string name="metadata_tag_value">Tag value</string>
+    <string name="metadata_tag_invalid_or_exists">Enter a valid, unique tag name.</string>
+    <string name="metadata_image_invalid">Choose a valid JPEG, PNG, or WebP image.</string>
+    <string name="metadata_no_cover">No embedded cover art</string>
+    <string name="metadata_load_failed">Could not read this audio file’s metadata.</string>
+    <string name="metadata_save_failed">Could not save the audio metadata.</string>
+    <string name="metadata_permission_granted_retry">Permission granted. Tap Save again to apply the changes.</string>
+    <string name="metadata_permission_denied">Permission was not granted; the audio file was not changed.</string>
+
+    <string name="genre">Genre</string>
+    <string name="metadata_editor">Metadata editor</string>
+    <string name="save_metadata">Save metadata</string>
+    <string name="track_number">Track number</string>
+    <string name="metadata_read_failed">Could not read audio metadata: %1$s</string>
+    <string name="metadata_write_failed">Could not save audio metadata: %1$s</string>
+    <string name="metadata_saved">Metadata saved. The library will refresh shortly.</string>
+    <string name="metadata_loading">Reading audio tags…</string>
+    <string name="metadata_saving">Saving audio tags…</string>
+    <string name="metadata_save_note">Only the fields shown here are changed. Other supported tags are preserved. Save writes directly to the selected audio file and may require file access permission.</string>
+    <string name="confirm_metadata_save">Save changes to this audio file?</string>
+    <string name="confirm_metadata_save_message">These changes modify the selected file\'s embedded tags. Make sure the file is backed up if you need to preserve the original metadata.</string>
+    <string name="edit_metadata">Edit metadata</string>
 
     <string name="audio_downloads">Audio downloads</string>
+    <string name="flac_download_heading">Download a FLAC file</string>
+    <string name="flac_download_source_heading">Use an authorized source</string>
+    <string name="flac_download_details_heading">File details</string>
+    <string name="flac_download_status_heading">Downloading</string>
+    <string name="flac_safety_scan_heading">Offline safety checks</string>
     <string name="flac_download_disclaimer">Download only audio files you own or are authorized to download. Paste a direct HTTPS link from a source that permits downloading; this tool does not search for music or bypass DRM, paywalls, or access controls.</string>
     <string name="direct_https_url">Direct HTTPS URL</string>
     <string name="direct_https_url_hint">Use a direct file link, not a webpage or streaming page.</string>
     <string name="flac_file_name">File name (.flac)</string>
-    <string name="download_and_validate_flac">Download and validate FLAC</string>
-    <string name="flac_download_limits">Downloads are limited to 500 MB per file. The app verifies the FLAC file signature before publishing it and will not convert other formats. Android 10+ saves to Music/Rose Requiem; older Android versions use app-specific music storage.</string>
+    <string name="download_and_validate_flac">Download and scan FLAC</string>
+    <string name="flac_download_limits">Downloads are limited to 500 MB per file. The app checks the FLAC structure and scans its bundled threat signatures before publishing it; it will not convert other formats. Downloads are saved to Music/Rose Requiem.</string>
     <string name="flac_download_progress">Downloaded %1$s of %2$s</string>
     <string name="flac_downloaded_size">Downloaded %1$s</string>
     <string name="flac_download_success">Saved %1$s to %2$s</string>
+    <string name="flac_download_cancelled">Download cancelled. No file was saved.</string>
+    <string name="flac_safety_scan_running">Checking the FLAC container and scanning bundled YARA-X signatures locally…</string>
+    <string name="flac_safety_scan_disclosure">Offline scan: checks the FLAC structure, the EICAR test signature, and a pinned ReversingLabs YARA ruleset. Audio is not uploaded. Rule matching can miss new or obfuscated threats and can produce false positives; a clean result does not guarantee safety. Rules update with app releases.</string>
 </resources>

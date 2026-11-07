@@ -12,6 +12,7 @@ plugins {
 android {
     namespace = "com.roserequiem.app"
     compileSdk = 36
+    ndkVersion = "27.2.12479018"
 
     defaultConfig {
         applicationId = "com.roserequiem.app"
@@ -24,6 +25,7 @@ android {
         targetSdk = 36
         versionCode = 434
         versionName = "4.4.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -80,8 +82,34 @@ kotlin {
     }
 }
 
+val yaraXNativeOutput = layout.buildDirectory.dir("generated/yaraX/jniLibs")
+android.sourceSets.getByName("main").jniLibs.srcDir(yaraXNativeOutput)
+
+val buildYaraXNative by tasks.registering(Exec::class) {
+    val nativeModule = rootProject.file("native/yara_x")
+    inputs.files(rootProject.fileTree(nativeModule) { exclude("target/**") })
+    outputs.dir(yaraXNativeOutput)
+    workingDir(nativeModule)
+    environment("CARGO_NDK_PLATFORM", "23")
+    commandLine(
+        "cargo", "ndk",
+        "-t", "armeabi-v7a",
+        "-t", "arm64-v8a",
+        "-t", "x86",
+        "-t", "x86_64",
+        "-o", yaraXNativeOutput.get().asFile.absolutePath,
+        "build", "--release",
+    )
+}
+
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("JniLibFolders") }.configureEach {
+    dependsOn(buildYaraXNative)
+}
+
 dependencies {
     testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.activity.compose)

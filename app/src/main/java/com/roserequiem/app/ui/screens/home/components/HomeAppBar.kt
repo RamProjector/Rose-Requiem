@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Deselect
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material3.DropdownMenu
@@ -41,6 +42,8 @@ fun HomeAppBar(
     onAudioDownloadsRequest: () -> Unit,
     onSelectAllSongsRequest: () -> Unit,
     onInvertSongSelectionRequest: () -> Unit,
+    selectedFilePath: String?,
+    onEditMetadataRequest: (String) -> Unit,
     cachedSize: Int,
 ) {
     MediumTopAppBar(
@@ -104,6 +107,16 @@ fun HomeAppBar(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
+                    if (selectedFilePath != null) {
+                        DropdownMenuItem(
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                            text = { Text(stringResource(R.string.edit_metadata)) },
+                            onClick = {
+                                onEditMetadataRequest(selectedFilePath)
+                                expanded = false
+                            }
+                        )
+                    }
                     DropdownMenuItem(
                         text = {
                             Text(

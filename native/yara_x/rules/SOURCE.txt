@@ -1,0 +1,8 @@
+Source: https://github.com/reversinglabs/reversinglabs-yara-rules
+Upstream branch at import: develop
+Pinned upstream commit: e0a0be54aa1e11ccfd6854e4f19e9476f328fd84
+Upstream rule directory: yara/ (310 .yara files; approximately 1,240 rule declarations)
+Concatenated bundle SHA-256: 1996ab20214754c9c05e79341b504b3d48c79bee661850fa31985e4f1eccd544
+License: MIT; see LICENSE in this directory.
+
+The files were concatenated in sorted path order and each upstream path is recorded as a comment in reversinglabs.yar. No live rules are downloaded by the app. Rule updates are intentionally delivered through reviewed source/app updates.

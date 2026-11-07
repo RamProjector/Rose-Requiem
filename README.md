@@ -27,3 +27,11 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 - [syncedlyrics](https://github.com/0x7d4/syncedlyrics)
 - [Statusbar Lyric Ext](https://github.com/cjybyjk/StatusBarLyricExt)
 - [Alex](https://github.com/paxsenix0) for access to various apis
+
+### Download safety
+
+Authorized direct FLAC downloads are checked locally before they are saved. The scanner validates the FLAC metadata structure, checks the EICAR test signature, and runs YARA-X against a pinned snapshot of [ReversingLabs' MIT-licensed YARA rules](https://github.com/reversinglabs/reversinglabs-yara-rules). Audio files are not uploaded for scanning. The bundled rules update only with reviewed app updates. This signature scan can miss new or obfuscated threats and may produce false positives; a clean result is not a guarantee that a file is safe. If the native engine or rules fail to load, the download is not published.
+
+### Building from source
+
+In addition to JDK 17 and the Android SDK, building the app requires Rust 1.95.0, Android NDK 27.2.12479018, and `cargo-ndk` 4.1.2. The Gradle build compiles the YARA-X native library for `armeabi-v7a`, `arm64-v8a`, `x86`, and `x86_64`. Install the Rust toolchain from `rust-toolchain.toml`, install the pinned NDK through Android SDK Manager, then install `cargo-ndk` with `cargo install cargo-ndk --version 4.1.2 --locked` before running Gradle.

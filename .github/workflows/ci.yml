@@ -27,6 +27,27 @@ jobs:
           distribution: "zulu"
           java-version: "17"
 
+      - name: Set up Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@b328d6be848e9b620901df2e49d27ad7e5536c0b # v1
+        with:
+          toolchain: "1.95.0"
+          target: "aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android"
+          components: "rustfmt"
+          cache-workspaces: "native/yara_x -> native/yara_x/target"
+
+      - name: Install Android NDK
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;27.2.12479018"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --version 4.1.2 --locked
+
+      - name: Test YARA-X native scanner and bundled rules
+        run: |
+          cargo fmt --manifest-path native/yara_x/Cargo.toml --check
+          cargo test --locked --manifest-path native/yara_x/Cargo.toml
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
@@ -46,6 +67,16 @@ jobs:
 
       - name: Build debug APK
         run: ./gradlew assembleDebug
+
+      - name: Compile Android instrumentation tests
+        run: ./gradlew assembleDebugAndroidTest
+
+      - name: Run packaged YARA-X JNI smoke test on Android
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          arch: x86_64
+          script: ./gradlew connectedDebugAndroidTest
 
       - name: Upload debug APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
