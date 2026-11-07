@@ -6,14 +6,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,6 +34,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.ui.unit.dp
 import com.roserequiem.app.R
 import com.roserequiem.app.data.AuthorizedFlacDownloader
@@ -74,92 +82,128 @@ fun AudioDownloadsScreen(onBack: () -> Unit) {
         }
     ) { padding ->
         Column(
-            modifier = Modifier.fillMaxWidth().padding(padding).padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(padding)
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(stringResource(R.string.flac_download_disclaimer), style = androidx.compose.material3.MaterialTheme.typography.bodyMedium)
-            OutlinedTextField(
-                value = sourceUrl,
-                onValueChange = { sourceUrl = it },
-                label = { Text(stringResource(R.string.direct_https_url)) },
-                supportingText = { Text(stringResource(R.string.direct_https_url_hint)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+            Text(
+                stringResource(R.string.flac_download_heading),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
             )
-            OutlinedTextField(
-                value = fileName,
-                onValueChange = { fileName = it },
-                label = { Text(stringResource(R.string.flac_file_name)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            Button(
-                enabled = !downloading && sourceUrl.isNotBlank() && fileName.isNotBlank(),
-                onClick = {
-                    downloading = true
-                    scanningSafety = false
-                    downloadedBytes = 0L
-                    totalBytes = null
-                    resultMessage = null
-                    val cancellation = FlacDownloadCancellation()
-                    activeCancellation = cancellation
-                    scope.launch {
-                        try {
-                            val result = withContext(Dispatchers.IO) {
-                                AuthorizedFlacDownloader(context).download(
-                                    sourceUrl = sourceUrl,
-                                    requestedName = fileName,
-                                    cancellation = cancellation,
-                                    onSafetyScanStarted = { progressHandler.post { scanningSafety = true } },
-                                ) { current, total ->
-                                    progressHandler.post {
-                                        downloadedBytes = current
-                                        totalBytes = total
-                                    }
-                                }
-                            }
-                            when (result) {
-                                is FlacDownloadResult.Success -> {
-                                    resultMessage = flacDownloadSuccessTemplate.replace("__NAME__", result.displayName).replace("__LOCATION__", result.location)
-                                }
-                                is FlacDownloadResult.Failure -> resultMessage = result.message
-                                FlacDownloadResult.Cancelled -> resultMessage = flacDownloadCancelledMessage
-                            }
-                        } finally {
-                            downloading = false
+
+            Card {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.flac_download_source_heading), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.flac_download_disclaimer), style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+
+            Card {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.flac_download_details_heading), style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(
+                        value = sourceUrl,
+                        onValueChange = { sourceUrl = it },
+                        label = { Text(stringResource(R.string.direct_https_url)) },
+                        supportingText = { Text(stringResource(R.string.direct_https_url_hint)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
+                    )
+                    OutlinedTextField(
+                        value = fileName,
+                        onValueChange = { fileName = it },
+                        label = { Text(stringResource(R.string.flac_file_name)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    )
+                    Button(
+                        enabled = !downloading && sourceUrl.isNotBlank() && fileName.isNotBlank(),
+                        onClick = {
+                            downloading = true
                             scanningSafety = false
-                            activeCancellation = null
+                            downloadedBytes = 0L
+                            totalBytes = null
+                            resultMessage = null
+                            val cancellation = FlacDownloadCancellation()
+                            activeCancellation = cancellation
+                            scope.launch {
+                                try {
+                                    val result = withContext(Dispatchers.IO) {
+                                        AuthorizedFlacDownloader(context).download(
+                                            sourceUrl = sourceUrl,
+                                            requestedName = fileName,
+                                            cancellation = cancellation,
+                                            onSafetyScanStarted = { progressHandler.post { scanningSafety = true } },
+                                        ) { current, total ->
+                                            progressHandler.post {
+                                                downloadedBytes = current
+                                                totalBytes = total
+                                            }
+                                        }
+                                    }
+                                    when (result) {
+                                        is FlacDownloadResult.Success -> {
+                                            resultMessage = flacDownloadSuccessTemplate.replace("__NAME__", result.displayName).replace("__LOCATION__", result.location)
+                                        }
+                                        is FlacDownloadResult.Failure -> resultMessage = result.message
+                                        FlacDownloadResult.Cancelled -> resultMessage = flacDownloadCancelledMessage
+                                    }
+                                } finally {
+                                    downloading = false
+                                    scanningSafety = false
+                                    activeCancellation = null
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Default.Download, contentDescription = null)
+                        Text(stringResource(R.string.download_and_validate_flac), modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+            }
+
+            if (downloading) {
+                Card {
+                    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            stringResource(if (scanningSafety) R.string.flac_safety_scan_heading else R.string.flac_download_status_heading),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        if (scanningSafety) {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                            Text(stringResource(R.string.flac_safety_scan_running), style = MaterialTheme.typography.bodyMedium)
+                        } else if (totalBytes != null && totalBytes!! > 0L) {
+                            LinearProgressIndicator(
+                                progress = { (downloadedBytes.toFloat() / totalBytes!!.toFloat()).coerceIn(0f, 1f) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Text(stringResource(R.string.flac_download_progress, formatBytes(downloadedBytes), formatBytes(totalBytes!!)))
+                        } else {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                            Text(stringResource(R.string.flac_downloaded_size, formatBytes(downloadedBytes)))
+                        }
+                        TextButton(onClick = { activeCancellation?.cancel() }, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.cancel))
                         }
                     }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Download, contentDescription = null)
-                Text(stringResource(R.string.download_and_validate_flac), modifier = Modifier.padding(start = 8.dp))
-            }
-            if (downloading) {
-                if (scanningSafety) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                    Text(stringResource(R.string.flac_safety_scan_running))
-                } else if (totalBytes != null && totalBytes!! > 0L) {
-                    LinearProgressIndicator(
-                        progress = { (downloadedBytes.toFloat() / totalBytes!!.toFloat()).coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Text(stringResource(R.string.flac_download_progress, formatBytes(downloadedBytes), formatBytes(totalBytes!!)))
-                } else {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                    Text(stringResource(R.string.flac_downloaded_size, formatBytes(downloadedBytes)))
-                }
-                TextButton(
-                    onClick = { activeCancellation?.cancel() },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.cancel))
                 }
             }
-            Text(stringResource(R.string.flac_download_limits), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
-            Text(stringResource(R.string.flac_safety_scan_disclosure), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+
+            Card {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.flac_safety_scan_heading), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.flac_download_limits), style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.flac_safety_scan_disclosure), style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
     }
 

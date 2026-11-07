@@ -276,6 +276,11 @@
     <string name="edit_metadata">Edit metadata</string>
 
     <string name="audio_downloads">Audio downloads</string>
+    <string name="flac_download_heading">Download a FLAC file</string>
+    <string name="flac_download_source_heading">Use an authorized source</string>
+    <string name="flac_download_details_heading">File details</string>
+    <string name="flac_download_status_heading">Downloading</string>
+    <string name="flac_safety_scan_heading">Offline safety checks</string>
     <string name="flac_download_disclaimer">Download only audio files you own or are authorized to download. Paste a direct HTTPS link from a source that permits downloading; this tool does not search for music or bypass DRM, paywalls, or access controls.</string>
     <string name="direct_https_url">Direct HTTPS URL</string>
     <string name="direct_https_url_hint">Use a direct file link, not a webpage or streaming page.</string>
