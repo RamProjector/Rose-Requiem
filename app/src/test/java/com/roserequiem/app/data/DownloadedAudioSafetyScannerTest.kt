@@ -89,7 +89,7 @@ class DownloadedAudioSafetyScannerTest {
     fun cancellationStopsTheScanBeforeReading() = withTempAudio(validFlac(ByteArray(128))) { file ->
         assertEquals(
             AudioSafetyScanResult.Cancelled,
-            DownloadedAudioSafetyScanner.scan(file) { true },
+            DownloadedAudioSafetyScanner.scan(file, isCancelled = { true }),
         )
     }
 

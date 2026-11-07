@@ -132,7 +132,10 @@ class AuthorizedFlacDownloader(
 
             if (cancellation.isCancelled) return FlacDownloadResult.Cancelled
             onSafetyScanStarted()
-            when (val scan = DownloadedAudioSafetyScanner.scan(temp) { cancellation.isCancelled }) {
+            when (val scan = DownloadedAudioSafetyScanner.scan(
+                temp,
+                isCancelled = { cancellation.isCancelled },
+            )) {
                 AudioSafetyScanResult.Passed -> Unit
                 is AudioSafetyScanResult.ThreatDetected -> return FlacDownloadResult.Failure(
                     "The offline safety scan detected ${scan.signatureName}. The download was blocked and nothing was saved."
