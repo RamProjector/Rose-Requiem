@@ -89,26 +89,20 @@ val buildYaraXNative by tasks.registering(Exec::class) {
     val nativeModule = rootProject.file("native/yara_x")
     inputs.files(rootProject.fileTree(nativeModule) { exclude("target/**") })
     outputs.dir(yaraXNativeOutput)
-    workingDir(rootProject.projectDir)
+    workingDir(nativeModule)
     environment("CARGO_NDK_PLATFORM", "23")
-    doFirst {
-        val outputDirectory = yaraXNativeOutput.get().asFile
-        outputDirectory.deleteRecursively()
-        outputDirectory.mkdirs()
-        commandLine(
-            "cargo", "ndk",
-            "-t", "armeabi-v7a",
-            "-t", "arm64-v8a",
-            "-t", "x86",
-            "-t", "x86_64",
-            "-o", outputDirectory.absolutePath,
-            "build", "--release",
-            "--manifest-path", nativeModule.resolve("Cargo.toml").absolutePath,
-        )
-    }
+    commandLine(
+        "cargo", "ndk",
+        "-t", "armeabi-v7a",
+        "-t", "arm64-v8a",
+        "-t", "x86",
+        "-t", "x86_64",
+        "-o", yaraXNativeOutput.get().asFile.absolutePath,
+        "build", "--release",
+    )
 }
 
-tasks.named("preBuild").configure {
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("JniLibFolders") }.configureEach {
     dependsOn(buildYaraXNative)
 }
 
