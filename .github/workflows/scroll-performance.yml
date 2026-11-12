@@ -81,7 +81,7 @@ jobs:
       # step above either way, it has the same numbers.
       - name: Upload benchmark results
         if: ${{ inputs.task == 'benchmark' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: scroll-benchmark-results
           path: baselineprofile/build/outputs/**
@@ -89,7 +89,7 @@ jobs:
 
       - name: Upload regenerated baseline profile
         if: ${{ inputs.task == 'baseline-profile' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: baseline-profile
           path: app/src/main/baseline-prof.txt
