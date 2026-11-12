@@ -34,7 +34,7 @@ preference = "1.2.1"
 # that's plausibly relevant given how much CJK/Cyrillic/Arabic lyrics text flows
 # through this client) but it's ~10 days old at the time of this bump -- worth moving
 # to after 3.5.1's had a run on-device, not in the same change.
-ktor = "3.5.1"
+ktor = "3.6.0"
 datastore = "1.1.1"
 taglib = "1.0.0-alpha18"
 media3 = "1.11.1"
