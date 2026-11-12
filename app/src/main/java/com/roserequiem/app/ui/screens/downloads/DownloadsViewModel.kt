@@ -201,23 +201,8 @@ class DownloadsViewModel(
         records: List<DownloadRecord>,
         searchQuery: String,
         statusFilter: DownloadStatus?,
-    ): List<FilteredBatch> {
-        val noFilterActive = statusFilter == null && searchQuery.isBlank()
-
-        return groupIntoBatches(records).mapNotNull { batch ->
-            val matching = if (noFilterActive) {
-                batch.records
-            } else {
-                batch.records.filter { record ->
-                    (statusFilter == null || record.status == statusFilter) &&
-                        (searchQuery.isBlank() ||
-                            record.songName.contains(searchQuery, ignoreCase = true) ||
-                            record.artist.contains(searchQuery, ignoreCase = true))
-                }
-            }
-            if (matching.isEmpty()) null else FilteredBatch(batch, matching)
-        }
-    }
+    ): List<FilteredBatch> =
+        filterBatches(groupIntoBatches(records), searchQuery, statusFilter)
 }
 
 /**
